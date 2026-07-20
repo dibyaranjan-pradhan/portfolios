@@ -63,6 +63,13 @@
         <span class="nav-label">Club Requests</span>
       </a>
 
+      <a href="#" class="nav-item" data-section="events">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </span>
+        <span class="nav-label">Events</span>
+      </a>
+
       <p class="nav-group-label">Moderation</p>
 
       <a href="#" class="nav-item" data-section="reports">
@@ -81,11 +88,11 @@
 
       <p class="nav-group-label">Settings</p>
 
-      <a href="#" class="nav-item" data-section="misc">
+      <a href="#" class="nav-item" data-section="cockpit">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/></svg>
         </span>
-        <span class="nav-label">Miscellaneous</span>
+        <span class="nav-label">Cockpit</span>
       </a>
     </nav>
 
@@ -304,97 +311,362 @@
       <div class="pagination" id="supportPagination"></div>
     </section>
 
-    <!-- ══ MISCELLANEOUS ══ -->
-    <section class="section hidden" id="section-misc">
+    <!-- ══ EVENTS ══ -->
+    <section class="section hidden" id="section-events">
       <div class="section-intro">
-        <h3 class="section-title">Miscellaneous</h3>
-        <p class="section-desc">Manage app content — guidelines, about app, FAQs, support, legal texts, and policies.</p>
+        <h3 class="section-title">Events Management</h3>
+        <p class="section-desc">Create, edit, post, and manage events in the app.</p>
+      </div>
+      
+      <div class="table-toolbar">
+        <button class="btn-sm btn-primary" id="eventCreateBtn">+ Create Event</button>
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="eventSearch" type="text" placeholder="Search by name, venue…" />
+        </div>
+        <select class="filter-select" id="eventStatusFilter">
+          <option value="">All Status</option>
+          <option value="draft">Draft</option>
+          <option value="posted">Posted</option>
+        </select>
+        <select class="filter-select" id="eventCategoryFilter">
+          <option value="">All Categories</option>
+          <option value="Club Night">Club Night</option>
+          <option value="DJ Night">DJ Night</option>
+          <option value="Rooftop Party">Rooftop Party</option>
+          <option value="Live Performance">Live Performance</option>
+          <option value="Networking">Networking</option>
+          <option value="Pool Party">Pool Party</option>
+          <option value="Other">Other</option>
+        </select>
+        <button class="btn-sm btn-primary" id="eventFilterBtn">Filter</button>
       </div>
 
-      <!-- Guidelines -->
-      <div class="misc-group">
-        <h4 class="misc-group-title">Guidelines <span class="misc-hint">(one point per line)</span></h4>
-        <p class="misc-col-label">Male</p>
-        <textarea id="misc-maleGuidelines" class="misc-textarea" rows="7" placeholder="Be respectful and courteous at all times.&#10;Arrive on time as agreed.&#10;..."></textarea>
-        <p class="misc-col-label" style="margin-top:14px">Female</p>
-        <textarea id="misc-femGuidelines" class="misc-textarea" rows="7" placeholder="Review the male user's profile carefully before accepting.&#10;Meet only at the confirmed club location.&#10;..."></textarea>
+      <div class="table-wrap">
+        <table class="data-table" id="eventsTable">
+          <thead>
+            <tr>
+              <th>Event Name</th>
+              <th>Status</th>
+              <th>Date & Time</th>
+              <th>Venue</th>
+              <th>Category</th>
+              <th>Entry Type</th>
+              <th>Capacity</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="eventsBody"></tbody>
+        </table>
+        <div class="table-empty hidden" id="eventsEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <p>No events found</p>
+        </div>
+      </div>
+      <div class="pagination" id="eventsPagination"></div>
+    </section>
+
+    <!-- ══ COCKPIT ══ -->
+    <section class="section hidden" id="section-cockpit">
+      <div class="section-intro">
+        <h3 class="section-title">Cockpit</h3>
+        <p class="section-desc">Manage app versioning, payment settings, and content configuration.</p>
       </div>
 
-      <!-- About App -->
-      <div class="misc-group">
-        <h4 class="misc-group-title">About App</h4>
-        <p class="misc-col-label">Male</p>
-        <textarea id="misc-maleAbout" class="misc-textarea" rows="6" placeholder="Stag is a premium social experience app for male users..."></textarea>
-        <p class="misc-col-label" style="margin-top:14px">Female</p>
-        <textarea id="misc-femAbout" class="misc-textarea" rows="6" placeholder="Stag is a premium social experience app for female users..."></textarea>
+      <!-- Cockpit Tabs -->
+      <div class="cockpit-tabs">
+        <button class="cockpit-tab active" data-tab="app-version">App Version</button>
+        <button class="cockpit-tab" data-tab="payment">Payment</button>
+        <button class="cockpit-tab" data-tab="misc">Miscellaneous</button>
       </div>
 
-      <!-- FAQs -->
-      <div class="misc-group">
-        <h4 class="misc-group-title">FAQs <span class="misc-hint">(one entry per line)</span></h4>
-        <p class="misc-col-label">Male</p>
-        <textarea id="misc-maleFaq" class="misc-textarea" rows="7" placeholder="How does payment work? You pay after the request is confirmed.&#10;..."></textarea>
-        <p class="misc-col-label" style="margin-top:14px">Female</p>
-        <textarea id="misc-femFaq" class="misc-textarea" rows="7" placeholder="How do I accept a request? Go to your requests tab and tap Accept.&#10;..."></textarea>
+      <!-- ── App Version Tab ── -->
+      <div class="cockpit-tab-content active" id="cockpit-tab-app-version">
+        <!-- iOS Versions -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">iOS Versions (Semantic Versioning)</h4>
+          <p class="misc-col-label">Minimum Supported Version</p>
+          <input type="text" id="app-version-minIOSVersion" class="text-input" placeholder="e.g. 1.0.0" />
+          <div class="cockpit-hint">
+            <p>ℹ️ The lowest version allowed to use the app. Users below this version will be forced to update if "Force Upgrade" is enabled. If they update anyway, they won't be able to proceed without upgrading first.</p>
+          </div>
+          <p class="misc-col-label" style="margin-top:14px">Latest Version</p>
+          <input type="text" id="app-version-latestIOSVersion" class="text-input" placeholder="e.g. 1.2.3" />
+          <div class="cockpit-hint">
+            <p>ℹ️ The current newest version available. Users below this version will see an "Update Available" notification but can still use the app.</p>
+          </div>
+        </div>
+
+        <!-- Android Build Numbers -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Android Build Numbers</h4>
+          <p class="misc-col-label">Minimum Supported Build Number</p>
+          <input type="text" id="app-version-minAndroidBuildNumber" class="text-input" placeholder="e.g. 1, 42, 100" />
+          <div class="cockpit-hint">
+            <p>ℹ️ The lowest build number allowed to use the app. Users below this number will be forced to update if "Force Upgrade" is enabled. If they update anyway, they won't be able to proceed without upgrading first.</p>
+          </div>
+          <p class="misc-col-label" style="margin-top:14px">Latest Build Number</p>
+          <input type="text" id="app-version-latestAndroidBuildNumber" class="text-input" placeholder="e.g. 1, 42, 100" />
+          <div class="cockpit-hint">
+            <p>ℹ️ The current newest build number available. Users below this number will see an "Update Available" notification but can still use the app.</p>
+          </div>
+        </div>
+
+        <!-- Update Settings -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Update Settings</h4>
+          <p class="misc-col-label">Update Message</p>
+          <textarea id="app-version-updateMessage" class="misc-textarea" rows="6" placeholder="A new version of the app is available. Please update to continue."></textarea>
+          <div class="cockpit-hint">
+            <p>ℹ️ This message will be shown to users when an update is available. Use this to explain why they should update (e.g., "Security fixes", "New features", etc.).</p>
+          </div>
+        </div>
+
+        <!-- Force Upgrade -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Force Upgrade</h4>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="app-version-forceUpgradeEnabled" style="width: 18px; height: 18px; cursor: pointer;" />
+            <span>Enable force upgrade</span>
+          </label>
+          <div class="cockpit-hint" style="margin-top: 12px;">
+            <p>ℹ️ When enabled, users below the minimum supported version will be forced to update the app. They will see a non-dismissible modal and cannot proceed without updating. When disabled, only the "Latest Version" check applies, showing optional update notifications.</p>
+          </div>
+        </div>
+
+        <div class="misc-footer">
+          <button class="btn-sm btn-primary" id="appVersionSaveBtn">Save App Version Settings</button>
+        </div>
       </div>
 
-      <!-- Support Credentials -->
-      <div class="misc-group">
-        <h4 class="misc-group-title">Support Credentials</h4>
-        <textarea id="misc-support" class="misc-textarea" rows="4" placeholder="support@stag.org.in&#10;Phone: +91-XXXXXXXXXX&#10;Hours: 10am – 7pm IST"></textarea>
+      <!-- ── Payment Tab ── -->
+      <div class="cockpit-tab-content" id="cockpit-tab-payment">
+        <!-- Platform Fees -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Platform Fee Percentages</h4>
+          <p class="misc-col-label">Male User Platform Fee %</p>
+          <input type="text" id="payment-mUserPlatformFeePercent" class="text-input" placeholder="e.g. 20" />
+          <div class="cockpit-hint" style="margin-top: 8px;">
+            <p>ℹ️ Platform fee percentage deducted from male user payments.</p>
+          </div>
+          <p class="misc-col-label" style="margin-top: 20px;">Female User Platform Fee %</p>
+          <input type="text" id="payment-fUserPlatformFeePercent" class="text-input" placeholder="e.g. 15" />
+          <div class="cockpit-hint" style="margin-top: 8px;">
+            <p>ℹ️ Platform fee percentage deducted from female user payments.</p>
+          </div>
+        </div>
+
+        <div class="misc-footer">
+          <button class="btn-sm btn-primary" id="paymentSaveBtn">Save Payment Settings</button>
+        </div>
       </div>
 
-      <!-- Legal -->
-      <div class="misc-group">
-        <h4 class="misc-group-title">Legal</h4>
-        <p class="misc-col-label">Terms &amp; Conditions</p>
-        <textarea id="misc-tnc" class="misc-textarea" rows="10" placeholder="By using this app you agree to..."></textarea>
-        <p class="misc-col-label" style="margin-top:14px">Privacy Policy</p>
-        <textarea id="misc-privacy" class="misc-textarea" rows="10" placeholder="We collect the following data..."></textarea>
-      </div>
+      <!-- ── Miscellaneous Tab ── -->
+      <div class="cockpit-tab-content" id="cockpit-tab-misc">
+        <!-- Guidelines -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Guidelines <span class="misc-hint">(one point per line)</span></h4>
+          <p class="misc-col-label">Male</p>
+          <textarea id="misc-maleGuidelines" class="misc-textarea" rows="7" placeholder="Be respectful and courteous at all times.&#10;Arrive on time as agreed.&#10;..."></textarea>
+          <p class="misc-col-label" style="margin-top:14px">Female</p>
+          <textarea id="misc-femGuidelines" class="misc-textarea" rows="7" placeholder="Review the male user's profile carefully before accepting.&#10;Meet only at the confirmed club location.&#10;..."></textarea>
+        </div>
 
-      <!-- Payment Policy -->
-      <div class="misc-group">
-        <h4 class="misc-group-title">Payment Policy</h4>
-        <p class="misc-col-label">Male</p>
-        <textarea id="misc-malePay" class="misc-textarea" rows="7" placeholder="Payment terms for male users..."></textarea>
-        <p class="misc-col-label" style="margin-top:14px">Female</p>
-        <textarea id="misc-femPay" class="misc-textarea" rows="7" placeholder="Payment terms for female users..."></textarea>
-      </div>
+        <!-- About App -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">About App</h4>
+          <p class="misc-col-label">Male</p>
+          <textarea id="misc-maleAbout" class="misc-textarea" rows="6" placeholder="Stag is a premium social experience app for male users..."></textarea>
+          <p class="misc-col-label" style="margin-top:14px">Female</p>
+          <textarea id="misc-femAbout" class="misc-textarea" rows="6" placeholder="Stag is a premium social experience app for female users..."></textarea>
+        </div>
 
-      <!-- Cancellation Policy -->
-      <div class="misc-group">
-        <h4 class="misc-group-title">Cancellation Policy</h4>
-        <p class="misc-col-label">Male</p>
-        <textarea id="misc-maleCancel" class="misc-textarea" rows="7" placeholder="Cancellation terms for male users..."></textarea>
-        <p class="misc-col-label" style="margin-top:14px">Female</p>
-        <textarea id="misc-femCancel" class="misc-textarea" rows="7" placeholder="Cancellation terms for female users..."></textarea>
-      </div>
+        <!-- FAQs -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">FAQs <span class="misc-hint">(one entry per line)</span></h4>
+          <p class="misc-col-label">Male</p>
+          <textarea id="misc-maleFaq" class="misc-textarea" rows="7" placeholder="How does payment work? You pay after the request is confirmed.&#10;..."></textarea>
+          <p class="misc-col-label" style="margin-top:14px">Female</p>
+          <textarea id="misc-femFaq" class="misc-textarea" rows="7" placeholder="How do I accept a request? Go to your requests tab and tap Accept.&#10;..."></textarea>
+        </div>
 
-      <!-- Refund Policy -->
-      <div class="misc-group">
-        <h4 class="misc-group-title">Refund Policy</h4>
-        <p class="misc-col-label">Male</p>
-        <textarea id="misc-maleRefund" class="misc-textarea" rows="7" placeholder="Refund terms for male users..."></textarea>
-        <p class="misc-col-label" style="margin-top:14px">Female</p>
-        <textarea id="misc-femRefund" class="misc-textarea" rows="7" placeholder="Refund terms for female users..."></textarea>
-      </div>
+        <!-- Support Credentials -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Support Credentials</h4>
+          <textarea id="misc-support" class="misc-textarea" rows="4" placeholder="support@stag.org.in&#10;Phone: +91-XXXXXXXXXX&#10;Hours: 10am – 7pm IST"></textarea>
+        </div>
 
-      <!-- Disclaimer & Safety Guidelines -->
-      <div class="misc-group">
-        <h4 class="misc-group-title">Disclaimer &amp; Safety Guidelines</h4>
-        <p class="misc-col-label">Male</p>
-        <textarea id="misc-maleDisclaimerAndSafety" class="misc-textarea" rows="9" placeholder="DISCLAIMER&#10;By using STAG, you agree that all meetups are social engagements arranged between consenting adults. STAG is a platform facilitator and holds no liability for the conduct of any user during or after a meetup. Payments made are non-refundable once a meetup is verified.&#10;&#10;SAFETY GUIDELINES&#10;• Only attend meetups at the confirmed club location listed in your request.&#10;• Do not share your personal contact details before the meetup is confirmed.&#10;• Respect the female user's boundaries at all times — any form of harassment will result in an immediate ban.&#10;• Carry a valid ID to the venue as clubs may require it.&#10;• If you feel unsafe at any point, leave the venue and contact support immediately."></textarea>
-        <p class="misc-col-label" style="margin-top:14px">Female</p>
-        <textarea id="misc-femDisclaimerAndSafety" class="misc-textarea" rows="9" placeholder="DISCLAIMER&#10;STAG connects you with verified male users for premium social experiences at curated club venues. By accepting a request, you acknowledge that participation is entirely voluntary. STAG is not liable for any dispute arising from a meetup. Your safety and comfort are our priority.&#10;&#10;SAFETY GUIDELINES&#10;• Only accept requests from users whose profiles you have reviewed carefully.&#10;• Always meet at the confirmed club location — never agree to change the venue last minute.&#10;• You can decline or cancel a request at any time without providing a reason.&#10;• Share your meetup plans with a trusted friend or family member before heading out.&#10;• Use the in-app OTP to confirm your arrival — never share it outside the app.&#10;• If you feel uncomfortable or unsafe, leave immediately and report the user via the app."></textarea>
-      </div>
+        <!-- Legal -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Legal</h4>
+          <p class="misc-col-label">Terms &amp; Conditions</p>
+          <textarea id="misc-tnc" class="misc-textarea" rows="10" placeholder="By using this app you agree to..."></textarea>
+          <p class="misc-col-label" style="margin-top:14px">Privacy Policy</p>
+          <textarea id="misc-privacy" class="misc-textarea" rows="10" placeholder="We collect the following data..."></textarea>
+        </div>
 
-      <div class="misc-footer">
-        <button class="btn-sm btn-primary" id="miscSaveBtn">Save All</button>
+        <!-- Payment Policy -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Payment Policy</h4>
+          <p class="misc-col-label">Male</p>
+          <textarea id="misc-malePay" class="misc-textarea" rows="7" placeholder="Payment terms for male users..."></textarea>
+          <p class="misc-col-label" style="margin-top:14px">Female</p>
+          <textarea id="misc-femPay" class="misc-textarea" rows="7" placeholder="Payment terms for female users..."></textarea>
+        </div>
+
+        <!-- Cancellation Policy -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Cancellation Policy</h4>
+          <p class="misc-col-label">Male</p>
+          <textarea id="misc-maleCancel" class="misc-textarea" rows="7" placeholder="Cancellation terms for male users..."></textarea>
+          <p class="misc-col-label" style="margin-top:14px">Female</p>
+          <textarea id="misc-femCancel" class="misc-textarea" rows="7" placeholder="Cancellation terms for female users..."></textarea>
+        </div>
+
+        <!-- Refund Policy -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Refund Policy</h4>
+          <p class="misc-col-label">Male</p>
+          <textarea id="misc-maleRefund" class="misc-textarea" rows="7" placeholder="Refund terms for male users..."></textarea>
+          <p class="misc-col-label" style="margin-top:14px">Female</p>
+          <textarea id="misc-femRefund" class="misc-textarea" rows="7" placeholder="Refund terms for female users..."></textarea>
+        </div>
+
+        <!-- Disclaimer & Safety Guidelines -->
+        <div class="misc-group">
+          <h4 class="misc-group-title">Disclaimer Points <span class="misc-hint">(one point per line, applies to all users)</span></h4>
+          <textarea id="misc-disclaimerPoints" class="misc-textarea" rows="7" placeholder="I understand STAG is a platform that facilitates social meetups between users and is not an insurer or guarantor of personal conduct.&#10;I agree to assess my surroundings, use good judgment, and prioritize my own safety at all times.&#10;..."></textarea>
+        </div>
+
+        <div class="misc-footer">
+          <button class="btn-sm btn-primary" id="miscSaveBtn">Save Miscellaneous Settings</button>
+        </div>
       </div>
     </section>
 
   </main>
+
+  <!-- ═══════════════════════════ EVENT FORM MODAL ════════════════════ -->
+  <div class="modal-overlay hidden" id="eventModal">
+    <div class="modal-card modal-wide">
+      <!-- Loading Overlay -->
+      <div class="event-save-loader" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); border-radius: 8px; align-items: center; justify-content: center; z-index: 100; flex-direction: column; gap: 16px;">
+        <div style="border: 3px solid rgba(224, 48, 42, 0.3); border-top: 3px solid #e0302a; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+        <p style="color: white; font-size: 14px; font-weight: 500;">Uploading photos...</p>
+      </div>
+      <button class="modal-close" id="eventModalClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <h3 class="modal-title" id="eventModalTitle">Create Event</h3>
+      <div class="modal-body form-body">
+        <form id="eventForm" class="form-grid">
+          <div class="form-group">
+            <label>Event Name *</label>
+            <input type="text" id="eventName" class="text-input" placeholder="e.g. Friday Night Club Bash" required />
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="eventCategory" class="text-input" required>
+              <option value="">Select Category</option>
+              <option value="Club Night">Club Night</option>
+              <option value="DJ Night">DJ Night</option>
+              <option value="Rooftop Party">Rooftop Party</option>
+              <option value="Live Performance">Live Performance</option>
+              <option value="Networking">Networking</option>
+              <option value="Pool Party">Pool Party</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Description *</label>
+            <textarea id="eventDescription" class="text-input" placeholder="Event details and highlights" rows="3" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Venue *</label>
+            <input type="text" id="eventVenue" class="text-input" placeholder="e.g. Skyline Lounge, Mumbai" required />
+          </div>
+          <div class="form-group">
+            <label>Date *</label>
+            <input type="date" id="eventDate" class="text-input" required />
+          </div>
+          <div class="form-group">
+            <label>Start Time *</label>
+            <input type="time" id="eventStartTime" class="text-input" required />
+          </div>
+          <div class="form-group">
+            <label>End Time *</label>
+            <input type="time" id="eventEndTime" class="text-input" required />
+          </div>
+          <div class="form-group">
+            <label>Entry Type *</label>
+            <select id="eventEntryType" class="text-input" required>
+              <option value="free">Free</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+          <div class="form-group" id="priceGroup" style="display: none;">
+            <label>Entry Fee (₹) *</label>
+            <input type="number" id="eventPrice" class="text-input" placeholder="e.g. 999" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Capacity</label>
+            <input type="number" id="eventCapacity" class="text-input" placeholder="e.g. 200" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Dress Code</label>
+            <input type="text" id="eventDressCode" class="text-input" placeholder="e.g. Smart Casual" />
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="eventAgeRestriction" style="width: 18px; height: 18px; cursor: pointer;" />
+              <span>Age Restriction (18+)</span>
+            </label>
+          </div>
+
+          <!-- Photo Upload Section -->
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Event Photos (Max 5 photos)</label>
+            <div class="photo-upload-area" id="photoUploadArea">
+              <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display: none;" />
+              <div class="photo-upload-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <p>Click to upload or drag photos here</p>
+                <p class="photo-upload-hint">JPG, PNG, WebP up to 10MB each</p>
+              </div>
+            </div>
+            <div class="photo-preview-grid" id="photoPreviewGrid"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-sm" id="eventModalCancel">Cancel</button>
+        <button class="btn-sm btn-primary" id="eventModalSave">Save Event</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════════ EVENT DELETE CONFIRMATION ═══════════════════ -->
+  <div class="modal-overlay hidden" id="eventDeleteModal">
+    <div class="modal-card modal-delete">
+      <div class="delete-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+      </div>
+      <h3 class="modal-title delete-title">Delete Event?</h3>
+      <div class="modal-body delete-body">
+        <p class="delete-warning">You're about to permanently delete this event. This action cannot be undone.</p>
+        <div class="delete-event-name" id="eventDeleteName"></div>
+      </div>
+      <div class="modal-actions delete-actions">
+        <button class="btn-sm btn-ghost" id="eventDeleteCancel">Keep Event</button>
+        <button class="btn-sm btn-danger btn-delete-confirm" id="eventDeleteConfirm">Delete Event</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══════════════════════════ USER DETAIL MODAL ════════════════════ -->
   <div class="modal-overlay hidden" id="userModal">

@@ -24,6 +24,24 @@
     </div>
   </div>
 
+  <!-- Refund confirmation modal -->
+  <div id="refundModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:28px 24px;max-width:420px;width:90%">
+      <h3 style="margin:0 0 8px;color:#fff;font-size:1.1rem">Confirm Refund</h3>
+      <p id="refundModalDesc" style="color:#aaa;font-size:0.875rem;margin:0 0 18px"></p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+        <input id="refundAmount" type="number" min="1" placeholder="Amount (₹)"
+          style="background:#111;border:1px solid #333;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;outline:none" />
+        <input id="refundReason" type="text" placeholder="Reason (e.g. customer requested refund)"
+          style="background:#111;border:1px solid #333;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;outline:none" />
+      </div>
+      <div style="display:flex;gap:10px">
+        <button id="refundConfirmBtn" style="flex:1;background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;font-family:inherit">Confirm Refund</button>
+        <button id="refundCancelBtn" style="flex:1;background:#333;color:#aaa;border:none;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;font-family:inherit">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Photo lightbox -->
   <div class="photo-lightbox" id="photoLightbox" role="dialog" aria-modal="true" aria-label="Profile photo">
     <button class="photo-lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>

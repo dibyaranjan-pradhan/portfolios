@@ -183,7 +183,7 @@
   }
 
   // ── Tab switching ───────────────────────────────────────────────────────────
-  const tabLoaded = { details: false, requests: false, booked: false, bank: false, availability: false, location: false };
+  const tabLoaded = { details: false, requests: false, booked: false, bank: false, availability: false, location: false, push: false, payout: false };
   let _cachedUser = null;
   let _cachedLocations = [];
 
@@ -217,6 +217,214 @@
       tabLoaded.location = true;
       loadLocationTab();
     }
+    if (name === 'push' && !tabLoaded.push) {
+      tabLoaded.push = true;
+      initPushTab();
+    }
+    if (name === 'payout' && !tabLoaded.payout) {
+      tabLoaded.payout = true;
+      initPayoutRowClicks();
+      loadPayoutHistory(1);
+    }
+  }
+
+  // ── Payout History tab ────────────────────────────────────────────────────────
+
+  // Module-level map so the single tbody click listener always has current data
+  const _payoutItemMap = {};
+
+  function isoWeekToRange(isoWeek) {
+    if (!isoWeek) return '—';
+    const match = isoWeek.match(/^(\d{4})-W(\d{2})$/);
+    if (!match) return isoWeek;
+    const year = parseInt(match[1], 10);
+    const week = parseInt(match[2], 10);
+    // ISO week 1 contains Jan 4; week starts Monday
+    const jan4      = new Date(Date.UTC(year, 0, 4));
+    const dayOfWeek = (jan4.getUTCDay() + 6) % 7; // 0=Mon…6=Sun
+    const weekMon   = new Date(jan4);
+    weekMon.setUTCDate(jan4.getUTCDate() - dayOfWeek + (week - 1) * 7);
+    const weekSun   = new Date(weekMon);
+    weekSun.setUTCDate(weekMon.getUTCDate() + 6);
+    const fmt = d => d.toLocaleString('en-IN', { day: '2-digit', month: 'short', timeZone: 'UTC' });
+    return `Wk ${week}, ${year} &nbsp;<span style="color:var(--muted);font-size:0.72rem">(${fmt(weekMon)} – ${fmt(weekSun)})</span>`;
+  }
+
+  // Date-range only (no "Wk N" prefix) — used in the payout list
+  function isoWeekDateRange(isoWeek) {
+    if (!isoWeek) return '—';
+    const match = isoWeek.match(/^(\d{4})-W(\d{2})$/);
+    if (!match) return isoWeek;
+    const year = parseInt(match[1], 10);
+    const week = parseInt(match[2], 10);
+    const jan4      = new Date(Date.UTC(year, 0, 4));
+    const dayOfWeek = (jan4.getUTCDay() + 6) % 7;
+    const weekMon   = new Date(jan4);
+    weekMon.setUTCDate(jan4.getUTCDate() - dayOfWeek + (week - 1) * 7);
+    const weekSun   = new Date(weekMon);
+    weekSun.setUTCDate(weekMon.getUTCDate() + 6);
+    const fmtShort = d => d.toLocaleString('en-IN', { day: '2-digit', month: 'short', timeZone: 'UTC' });
+    const fmtFull  = d => d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    return `${fmtShort(weekMon)} – ${fmtFull(weekSun)}`;
+  }
+
+  const ledgerTypeBadge = {
+    PAYOUT:  'badge-confirmed',
+    EARNING: 'badge-completed',
+    PENALTY: 'badge-cancelled',
+  };
+  const settlementBadgeMap = {
+    PENDING:   'badge-pending',
+    COMPLETED: 'badge-completed',
+    FAILED:    'badge-cancelled',
+  };
+
+  function payoutSummaryCard(label, value, color) {
+    return `
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+        <div style="color:var(--muted);font-size:0.73rem;margin-bottom:4px">${esc(label)}</div>
+        <div style="font-size:1.1rem;font-weight:600;color:${color}">${value}</div>
+      </div>`;
+  }
+
+  async function loadPayoutHistory(p) {
+    const body  = document.getElementById('payoutBody');
+    const empty = document.getElementById('payoutEmpty');
+    if (!body) return;
+
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Loading…</td></tr>';
+
+    const { ok, data } = await apiAbs(
+      API_BASE + '/v1/payment/users/' + encodeURIComponent(userId) + '/ledger?page=' + p + '&limit=10'
+    );
+
+    if (!ok || !data || !data.data) {
+      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Failed to load payout history.</td></tr>';
+      return;
+    }
+
+    const { items, total, limit } = data.data;
+    const summary = data.summary;
+    const totalPages = Math.ceil((total || 0) / (limit || 10));
+
+    // Render summary cards
+    const summaryEl = document.getElementById('payoutSummary');
+    if (summaryEl && summary) {
+      summaryEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:0 0 20px">
+          ${payoutSummaryCard('Pending Amount', fmtCurrency(summary.pendingAmount), '#ff9800')}
+          ${payoutSummaryCard('Total Earning',  fmtCurrency(summary.totalEarning),  '#50c878')}
+          ${payoutSummaryCard('Total Payout',   fmtCurrency(summary.totalPayout),   '#42a5f5')}
+          ${payoutSummaryCard('Total Penalty',  fmtCurrency(summary.totalPenalty),  '#ef5350')}
+        </div>`;
+    }
+
+    if (!items || !items.length) {
+      body.innerHTML = '';
+      if (empty) empty.classList.remove('hidden');
+      renderPagination('payoutPagination', p, 0, loadPayoutHistory);
+      return;
+    }
+    if (empty) empty.classList.add('hidden');
+
+    // Map of id → item for event delegation click handler
+    const payoutItemMap = _payoutItemMap;
+    // Clear previous page entries and populate with current page
+    Object.keys(payoutItemMap).forEach(k => delete payoutItemMap[k]);
+
+    body.innerHTML = items.map(item => {
+      payoutItemMap[item.id] = item;
+      const typeCls  = ledgerTypeBadge[item.type]   || 'badge-inactive';
+      const settlCls = settlementBadgeMap[item.settlementStatus] || 'badge-inactive';
+
+      // Secondary info line shown under amount
+      let subInfo = '';
+      if (item.type === 'PAYOUT' && item.deductions) {
+        const d = item.deductions;
+        subInfo = `<div style="font-size:0.71rem;color:var(--muted);margin-top:3px">Base ₹${(item.basePrice||0).toFixed(0)} &minus; Fee ₹${(d.PlatformFee||0).toFixed(0)} &minus; GST ₹${(d.GST||0).toFixed(0)}${d.Penalty ? ` &minus; Penalty ₹${d.Penalty.toFixed(0)}` : ''}</div>`;
+      } else if (item.type === 'EARNING') {
+        subInfo = `<div style="font-size:0.71rem;color:var(--muted);margin-top:3px">Base ₹${(item.basePrice||0).toFixed(0)}${item.platformFee ? ` &minus; Fee ₹${item.platformFee.toFixed(0)}` : ''}${item.gst ? ` &minus; GST ₹${item.gst.toFixed(0)}` : ''}</div>`;
+      } else if (item.type === 'PENALTY') {
+        subInfo = `<div style="font-size:0.71rem;color:#ef5350;margin-top:3px">Penalty: ₹${Math.abs(item.penalty||0).toFixed(0)}</div>`;
+      }
+
+      // Requests cell
+      let reqCell;
+      if (item.type === 'PAYOUT' && item.requestIds && item.requestIds.length) {
+        reqCell = `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(66,165,245,0.12);border:1px solid rgba(66,165,245,0.25);border-radius:6px;padding:3px 8px;font-size:0.75rem;color:#42a5f5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          ${item.requestIds.length} requests</span>`;
+      } else if (item.requestId) {
+        reqCell = `<a href="request.html?id=${encodeURIComponent(item.requestId)}" onclick="event.stopPropagation()" style="color:var(--red);font-family:monospace;font-size:0.72rem">${shortId(item.requestId)}</a>`;
+      } else {
+        reqCell = '—';
+      }
+
+      return `
+        <tr class="clickable-row" style="cursor:pointer" data-payout-id="${esc(item.id)}">
+          <td>
+            <span class="badge ${typeCls}">${esc(item.type)}</span>
+            ${item.referenceId ? `<div style="font-family:monospace;font-size:0.68rem;color:var(--muted);margin-top:3px">${esc(item.referenceId)}</div>` : ''}
+          </td>
+          <td>${fmtCurrency(item.finalAmount)}${subInfo}</td>
+          <td style="font-size:0.78rem;color:var(--muted);white-space:nowrap">${isoWeekDateRange(item.isoWeek)}</td>
+          <td><span class="badge ${settlCls}">${esc(item.settlementStatus)}</span></td>
+          <td>${reqCell}</td>
+          <td style="color:var(--muted);font-size:0.8rem">${fmtDate(item.createdAt)}</td>
+        </tr>`;
+    }).join('');
+
+    renderPagination('payoutPagination', p, totalPages, loadPayoutHistory);
+  }
+
+  // Single event delegation listener for payout rows — set up once when tab first loads
+  function initPayoutRowClicks() {
+    const body = document.getElementById('payoutBody');
+    if (!body) return;
+    body.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      const row = e.target.closest('tr[data-payout-id]');
+      if (!row) return;
+      const id   = row.dataset.payoutId;
+      const item = _payoutItemMap[id];
+      if (!item) return;
+      try { sessionStorage.setItem('payoutItem', JSON.stringify(item)); } catch (_) {}
+      window.location = `payout.html?id=${encodeURIComponent(id)}&userId=${encodeURIComponent(userId)}`;
+    });
+  }
+
+
+  // ── Push Notification tab ────────────────────────────────────────────────────
+  function initPushTab() {
+    const btn      = document.getElementById('pushSendBtn');
+    const feedback = document.getElementById('pushFeedback');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+      const title   = (document.getElementById('pushTitle').value || '').trim();
+      const message = (document.getElementById('pushMessage').value || '').trim();
+      if (!message) { feedback.style.color = '#e74c3c'; feedback.textContent = 'Message is required.'; return; }
+
+      btn.disabled = true;
+      feedback.style.color = 'var(--muted)';
+      feedback.textContent = 'Sending…';
+
+      const { ok, data } = await apiAbs(
+        API_BASE + '/v1/users/' + encodeURIComponent(userId) + '/push',
+        { method: 'POST', body: JSON.stringify({ title, message }) }
+      );
+
+      btn.disabled = false;
+      if (ok) {
+        feedback.style.color = '#50c878';
+        feedback.textContent = data?.message || 'Sent successfully.';
+        document.getElementById('pushTitle').value   = '';
+        document.getElementById('pushMessage').value = '';
+      } else {
+        feedback.style.color = '#e74c3c';
+        feedback.textContent = data?.message || 'Failed to send. User may not have a device token.';
+      }
+    });
   }
 
   // ── Hero (always visible) ────────────────────────────────────────────────────
@@ -511,7 +719,16 @@
     }
     empty.classList.add('hidden');
 
-    tbody.innerHTML = items.map(req => `
+    const refundableStatuses = new Set(['confirmed', 'completed']);
+
+    tbody.innerHTML = items.map(req => {
+      const canRefund = refundableStatuses.has(req.status);
+      const amount    = req.payment ? (req.payment.mUserTotalPayable ?? req.payment.baseAmount ?? '') : '';
+      const refundBtn = canRefund
+        ? `<button class="btn-sm" style="background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:0.75rem"
+             onclick="event.stopPropagation();openRefundModal('${esc(req.id)}','${esc(req.clubName)}',${amount})">Refund</button>`
+        : '';
+      return `
       <tr class="clickable-row" onclick="window.location='request.html?id=${encodeURIComponent(req.id)}'" style="cursor:pointer">
         <td style="font-size:0.73rem;color:var(--muted);font-family:monospace">${req.id || '—'}</td>
         <td><strong>${esc(req.clubName) || '—'}</strong><br/><span style="font-size:0.75rem;color:var(--muted)">${esc(req.clubAddress) || ''}</span></td>
@@ -520,11 +737,62 @@
         <td>${badge(req.status, reqStatusMap)}</td>
         <td style="color:var(--muted)">${fmtDate(req.datetime)}</td>
         <td>${req.payment ? fmtCurrency(req.payment.mUserTotalPayable) : '—'}</td>
-      </tr>
-    `).join('');
+        <td>${refundBtn}</td>
+      </tr>`;
+    }).join('');
 
     renderPagination('userReqPagination', p, totalPages, loadUserRequests);
   }
+
+  // ── Refund modal ─────────────────────────────────────────────────────────────
+  let _refundRequestId = null;
+
+  function openRefundModal(requestId, clubName, defaultAmount) {
+    _refundRequestId = requestId;
+    document.getElementById('refundModalDesc').textContent =
+      `Issue a refund for request at "${clubName}".`;
+    document.getElementById('refundAmount').value = defaultAmount || '';
+    document.getElementById('refundReason').value = '';
+    const modal = document.getElementById('refundModal');
+    modal.style.display = 'flex';
+  }
+
+  function closeRefundModal() {
+    document.getElementById('refundModal').style.display = 'none';
+    _refundRequestId = null;
+  }
+
+  document.getElementById('refundCancelBtn').addEventListener('click', closeRefundModal);
+  document.getElementById('refundModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('refundModal')) closeRefundModal();
+  });
+
+  document.getElementById('refundConfirmBtn').addEventListener('click', async () => {
+    if (!_refundRequestId) return;
+    const amount = parseFloat(document.getElementById('refundAmount').value);
+    const reason = document.getElementById('refundReason').value.trim() || 'Admin-initiated refund';
+    if (!amount || amount <= 0) { toast('Enter a valid refund amount'); return; }
+
+    const confirmBtn = document.getElementById('refundConfirmBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Processing…';
+
+    const { ok, data } = await apiAbs(
+      API_BASE + '/v1/payment/requests/' + encodeURIComponent(_refundRequestId) + '/refund',
+      { method: 'POST', body: JSON.stringify({ amount, reason, overrideAction: true }) }
+    );
+
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Confirm Refund';
+
+    if (ok) {
+      toast(data?.message || 'Refund processed successfully.');
+      closeRefundModal();
+      loadUserRequests(userReqPage);
+    } else {
+      toast(data?.message || 'Refund failed. Please try again.');
+    }
+  });
 
   // ── Booked Clubs tab ─────────────────────────────────────────────────────────
   let bookedPage = 1;
@@ -659,12 +927,16 @@
       if (bankTab) bankTab.style.display = '';
       if (availabilityTab) availabilityTab.style.display = '';
       if (locationTab) locationTab.style.display = '';
+      const payoutTab = document.getElementById('payoutTab');
+      if (payoutTab) payoutTab.style.display = '';
     }
 
-    // Show tab bar and activate the Details tab
+    // Show tab bar and activate the tab (respect URL hash for deep-linking)
     const tabBar = document.getElementById('userTabs');
     tabBar.style.display = '';
-    activateTab('details');
+    const hashTab = window.location.hash.replace('#', '');
+    const validTabs = Object.keys(tabLoaded);
+    activateTab(validTabs.includes(hashTab) ? hashTab : 'details');
 
     // Wire tab buttons
     tabBar.querySelectorAll('.user-tab').forEach(btn => {
@@ -676,6 +948,9 @@
     document.getElementById('userReqStatusFilter').addEventListener('change', () => loadUserRequests(1));
     document.getElementById('userReqTimelineFilter').addEventListener('change', () => loadUserRequests(1));
   }
+
+  // Expose for inline onclick handlers in dynamically-built table rows
+  window.openRefundModal = openRefundModal;
 
   load();
 })();

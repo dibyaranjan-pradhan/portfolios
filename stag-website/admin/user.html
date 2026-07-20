@@ -32,6 +32,8 @@
       <button class="user-tab" data-tab="bank" id="bankTab" style="display:none">Bank Account</button>
       <button class="user-tab" data-tab="availability" id="availabilityTab" style="display:none">Availability</button>
       <button class="user-tab" data-tab="location" id="locationTab" style="display:none">Location</button>
+      <button class="user-tab" data-tab="push">Push Notification</button>
+      <button class="user-tab" data-tab="payout" id="payoutTab" style="display:none">Payout History</button>
     </div>
 
     <!-- ── Tab: Details ────────────────────────────────────────────────────── -->
@@ -64,7 +66,7 @@
       </div>
       <div class="table-wrap">
         <table class="data-table">
-          <thead><tr><th>ID</th><th>Club</th><th>Male User</th><th>Female User</th><th>Status</th><th>Scheduled</th><th>Amount</th></tr></thead>
+          <thead><tr><th>ID</th><th>Club</th><th>Male User</th><th>Female User</th><th>Status</th><th>Scheduled</th><th>Amount</th><th></th></tr></thead>
           <tbody id="userReqBody"></tbody>
         </table>
         <div class="table-empty hidden" id="userReqEmpty">
@@ -108,6 +110,55 @@
     <div class="user-tab-panel" id="tab-location" style="display:none">
       <div id="locationBody">
         <div class="detail-loading">Loading location…</div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Push Notification ────────────────────────────────────────── -->
+    <div class="user-tab-panel" id="tab-push" style="display:none">
+      <div style="max-width:520px;margin-top:24px">
+        <p class="detail-section-title" style="margin-top:0">Send Push Notification</p>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <input id="pushTitle" type="text" placeholder="Title (default: STAG)"
+            style="background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none" />
+          <textarea id="pushMessage" rows="4" placeholder="Message…"
+            style="background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;resize:vertical;outline:none"></textarea>
+          <button id="pushSendBtn" class="btn-sm btn-primary" style="align-self:flex-start;padding:10px 24px;font-size:14px">Send</button>
+        </div>
+        <p id="pushFeedback" style="margin-top:14px;font-size:13px;color:var(--muted)"></p>
+      </div>
+    </div>
+
+    <!-- ── Tab: Payout History ──────────────────────────────────────────────── -->
+    <div class="user-tab-panel" id="tab-payout" style="display:none">
+      <div id="payoutSummary"></div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Type / Ref</th><th>Amount</th><th>Week</th><th>Settlement</th><th>Request(s)</th><th>Date</th></tr></thead>
+          <tbody id="payoutBody"></tbody>
+        </table>
+        <div class="table-empty hidden" id="payoutEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <p>No payout history found</p>
+        </div>
+      </div>
+      <div class="pagination" id="payoutPagination"></div>
+    </div>
+  </div>
+
+  <!-- Refund confirmation modal -->
+  <div id="refundModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:none;align-items:center;justify-content:center">
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:28px 24px;max-width:420px;width:90%">
+      <h3 style="margin:0 0 8px;color:#fff;font-size:1.1rem">Confirm Refund</h3>
+      <p id="refundModalDesc" style="color:#aaa;font-size:0.875rem;margin:0 0 18px"></p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+        <input id="refundAmount" type="number" min="1" placeholder="Amount (₹)"
+          style="background:#111;border:1px solid #333;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;outline:none" />
+        <input id="refundReason" type="text" placeholder="Reason (e.g. customer requested refund)"
+          style="background:#111;border:1px solid #333;border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;outline:none" />
+      </div>
+      <div style="display:flex;gap:10px">
+        <button id="refundConfirmBtn" style="flex:1;background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;font-family:inherit">Confirm Refund</button>
+        <button id="refundCancelBtn" style="flex:1;background:#333;color:#aaa;border:none;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;font-family:inherit">Cancel</button>
       </div>
     </div>
   </div>

@@ -326,9 +326,24 @@
 
   // ── Render ────────────────────────────────────────────────────────────────────
   function render(req) {
+    window._currentReq = req;
     const pay = req.payment;
     const mName = req.mUser ? (req.mUser.username || req.mUser.phone || 'Male User') : 'Male User';
     const fName = req.fUser ? (req.fUser.username || req.fUser.phone || 'Female User') : 'Female User';
+
+    // refund banner
+    const canRefund = pay && pay.paymentStatus === 'completed' && !pay.refundId;
+    let refundInfo = '';
+    if (pay && pay.refundId) {
+      refundInfo = `
+        <div class="refund-banner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refund initiated
+          ${pay.refundAmount ? ` &mdash; <strong>${fmtCurrency(pay.refundAmount)}</strong>` : ''}
+          ${pay.refundId ? ` &nbsp;&middot;&nbsp; Refund ID: <strong>${esc(pay.refundId)}</strong>` : ''}
+          ${pay.refundProcessedAt ? ` &nbsp;&middot;&nbsp; Processed at: <strong>${fmtDate(pay.refundProcessedAt)}</strong>` : ''}
+        </div>`;
+    }
 
     // cancellation info
     let cancelInfo = '';
@@ -353,6 +368,7 @@
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
             <div class="detail-hero-name" style="font-size:1.25rem">${esc(req.clubName) || '—'}</div>
             ${badge(req.status, reqStatusMap)}
+            ${canRefund ? `<button id="refundBtn" onclick="openRefundModal()" style="margin-left:auto;background:#e74c3c;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:0.82rem;cursor:pointer;font-family:inherit">Initiate Refund</button>` : ''}
           </div>
           <div style="color:var(--muted);font-size:0.85rem">${esc(req.clubAddress) || '—'}</div>
           <div style="color:var(--muted-mid);font-size:0.78rem;margin-top:6px">
@@ -363,6 +379,7 @@
       </div>
 
       ${cancelInfo}
+      ${refundInfo}
 
       <!-- Participants -->
       <p class="detail-section-title">Participants</p>
@@ -406,8 +423,10 @@
             ${field(`${fName} — Net Payout`,   `<strong>${fmtCurrency(pay.fUserNetPayout)}</strong>`)}
             ${pay.paymentStatus ? field('Payment Status', `<span style="text-transform:capitalize">${esc(pay.paymentStatus)}</span>`) : ''}
             ${pay.payoutStatus  ? field('Payout Status',  `<span style="text-transform:capitalize">${esc(pay.payoutStatus)}</span>`)  : ''}
-            ${pay.refundStatus  ? field('Refund Status',  `<span style="text-transform:capitalize">${esc(pay.refundStatus)}</span>`)  : ''}
-            ${pay.refundAmount  ? field('Refund Amount',  fmtCurrency(pay.refundAmount)) : ''}
+            ${pay.refundStatus      ? field('Refund Status',       `<span style="text-transform:capitalize">${esc(pay.refundStatus)}</span>`)  : ''}
+            ${pay.refundAmount      ? field('Refund Amount',       fmtCurrency(pay.refundAmount)) : ''}
+            ${pay.refundId         ? field('Refund ID',          `<span style="font-family:monospace;font-size:0.76rem;color:var(--muted)">${esc(pay.refundId)}</span>`) : ''}
+            ${pay.refundProcessedAt ? field('Refund Processed At', fmtDate(pay.refundProcessedAt)) : ''}
           </div>
         </div>
         ` : ''}
@@ -452,6 +471,58 @@
 
     content.appendChild(buildActivitySection(actData, data));
   }
+
+  // ── Refund modal ─────────────────────────────────────────────────────────────
+  function openRefundModal() {
+    const pay = window._currentReq && window._currentReq.payment;
+    const defaultAmount = pay ? (pay.mUserTotalPayable || pay.baseAmount || '') : '';
+    const clubName = window._currentReq ? window._currentReq.clubName : '';
+    document.getElementById('refundModalDesc').textContent =
+      `Issue a refund for request at "${clubName}".`;
+    document.getElementById('refundAmount').value = defaultAmount || '';
+    document.getElementById('refundReason').value = '';
+    const modal = document.getElementById('refundModal');
+    modal.style.display = 'flex';
+  }
+
+  function closeRefundModal() {
+    document.getElementById('refundModal').style.display = 'none';
+  }
+
+  document.getElementById('refundCancelBtn').addEventListener('click', closeRefundModal);
+  document.getElementById('refundModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('refundModal')) closeRefundModal();
+  });
+
+  document.getElementById('refundConfirmBtn').addEventListener('click', async () => {
+    const amount = parseFloat(document.getElementById('refundAmount').value);
+    const reason = document.getElementById('refundReason').value.trim() || 'Admin-initiated refund';
+    if (!amount || amount <= 0) { toast('Enter a valid refund amount'); return; }
+
+    const confirmBtn = document.getElementById('refundConfirmBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Processing…';
+
+    const { ok, data } = await apiAbs(
+      API_BASE + '/v1/payment/requests/' + encodeURIComponent(requestId) + '/refund',
+      { method: 'POST', body: JSON.stringify({ amount, reason, overrideAction: true }) }
+    );
+
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Confirm Refund';
+
+    if (ok && data && data.processed) {
+      closeRefundModal();
+      toast('Refund initiated successfully — Refund ID: ' + (data.refundId || ''));
+      // Reload the request to show updated refund details
+      load();
+    } else {
+      toast((data && data.message) || (data && data.reason) || 'Refund failed. Please try again.');
+    }
+  });
+
+  // expose openRefundModal to inline onclick
+  window.openRefundModal = openRefundModal;
 
   load();
 })();

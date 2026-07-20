@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Details — STAG Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/admin.css" />
+  <style>
+    .event-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .event-detail-header button {
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+
+    .event-detail-header button:hover {
+      color: var(--text);
+    }
+
+    .event-detail-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .event-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 32px;
+      margin-bottom: 32px;
+    }
+
+    .event-detail-main {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .event-gallery {
+      background: var(--bg-card);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .gallery-main {
+      width: 100%;
+      height: 400px;
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .gallery-main img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .gallery-main.empty {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .gallery-thumbs {
+      display: flex;
+      gap: 8px;
+      padding: 16px;
+      background: var(--bg-elevated);
+      overflow-x: auto;
+    }
+
+    .gallery-thumb {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+    }
+
+    .gallery-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .gallery-thumb.active {
+      border-color: var(--red);
+    }
+
+    .gallery-thumb:hover {
+      border-color: var(--border);
+    }
+
+    .event-info-section {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .event-info-section h3 {
+      color: var(--white);
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-icon {
+      width: 24px;
+      height: 24px;
+      color: var(--red);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      color: var(--white);
+      font-weight: 500;
+      font-size: 0.95rem;
+      word-break: break-word;
+    }
+
+    .info-value.muted {
+      color: var(--muted);
+    }
+
+    .event-description {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .event-description h3 {
+      color: var(--white);
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+
+    .description-text {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .event-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .status-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .status-badge-large {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .status-badge-large.posted {
+      background: rgba(46, 204, 113, 0.15);
+      color: #2ecc71;
+    }
+
+    .status-badge-large.draft {
+      background: rgba(241, 196, 15, 0.15);
+      color: #f1c40f;
+    }
+
+    .status-card-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .action-buttons .btn-sm {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .capacity-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--red) 0%, rgba(224, 48, 42, 0.6) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      color: white;
+    }
+
+    .capacity-number {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .capacity-label {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .date-time-large {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+
+    .date-time-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 768px) {
+      .event-detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .gallery-main {
+        height: 250px;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .action-buttons {
+        flex-direction: row;
+      }
+
+      .action-buttons .btn-sm {
+        flex: 1;
+      }
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .back-button:hover {
+      background: var(--bg-elevated);
+      color: var(--white);
+    }
+
+    .back-button svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .error-message {
+      color: var(--red);
+      text-align: center;
+      padding: 48px 24px;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body class="dash-body">
+
+  <div class="event-detail-container">
+    <!-- Header -->
+    <div class="event-detail-header">
+      <button class="back-button" id="backBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Events
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="eventContent" style="display: none;">
+      <!-- Gallery & Main Info -->
+      <div class="event-detail-grid">
+        <div class="event-detail-main">
+          <!-- Gallery -->
+          <div class="event-gallery">
+            <div class="gallery-main" id="galleryMain">
+              <div class="empty">Loading photos...</div>
+            </div>
+            <div class="gallery-thumbs" id="galleryThumbs"></div>
+          </div>
+
+          <!-- Basic Info -->
+          <div class="event-info-section">
+            <h3>
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Event Details
+            </h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">Date</div>
+                <div class="info-value" id="infoDate">—</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Time</div>
+                <div class="info-value" id="infoTime">—</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Venue</div>
+                <div class="info-value" id="infoVenue">—</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Category</div>
+                <div class="info-value" id="infoCategory">—</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Entry Type</div>
+                <div class="info-value" id="infoEntryType">—</div>
+              </div>
+              <div class="info-item" id="priceItem" style="display: none;">
+                <div class="info-label">Price</div>
+                <div class="info-value" id="infoPrice">—</div>
+              </div>
+              <div class="info-item" id="capacityItem" style="display: none;">
+                <div class="info-label">Capacity</div>
+                <div class="info-value" id="infoCapacity">—</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Dress Code</div>
+                <div class="info-value" id="infoDressCode">—</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Age Restriction</div>
+                <div class="info-value" id="infoAgeRestriction">—</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Contact</div>
+                <div class="info-value" id="infoContact">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="event-description" id="descriptionSection" style="display: none;">
+            <h3>Description</h3>
+            <div class="description-text" id="infoDescription">—</div>
+          </div>
+
+          <div class="event-description" id="additionalSection" style="display: none;">
+            <h3>Additional Information</h3>
+            <div class="description-text" id="infoAdditional">—</div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="event-sidebar">
+          <!-- Status Card -->
+          <div class="status-card">
+            <div class="status-card-label">Current Status</div>
+            <div class="status-badge-large" id="statusBadge">Draft</div>
+            <div class="action-buttons">
+              <button class="btn-sm btn-ghost" id="togglePostBtn">Post Event</button>
+              <button class="btn-sm btn-ghost" id="editEventBtn">Edit</button>
+              <button class="btn-sm btn-ghost" style="color: var(--red);" id="deleteEventBtn">Delete</button>
+            </div>
+          </div>
+
+          <!-- Capacity Circle (if capacity set) -->
+          <div class="status-card" id="capacityCardSmall" style="display: none;">
+            <div class="capacity-circle">
+              <div class="capacity-number" id="capacityNumberSmall">0</div>
+              <div class="capacity-label">Capacity</div>
+            </div>
+            <div class="status-card-label">Maximum Guests</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorMessage" style="display: none;">
+      <div class="error-message">
+        <p>Event not found or failed to load</p>
+        <button class="btn-sm" id="errorBackBtn" style="margin-top: 16px;">Go Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Config & Auth -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/shared.js"></script>
+  <script src="assets/js/event-detail.js"></script>
+</body>
+</html>

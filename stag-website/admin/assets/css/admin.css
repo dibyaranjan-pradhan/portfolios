@@ -594,6 +594,21 @@ input, select, textarea { font-family:inherit; }
 .btn-primary:active { transform: scale(0.97); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.btn-danger {
+  background: #d63946;
+  color: #fff;
+  border-radius: 10px;
+  padding: 11px 22px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px;
+  transition: background var(--trans), transform var(--trans);
+}
+.btn-danger:hover  { background: #c2303a; }
+.btn-danger:active { transform: scale(0.97); }
+.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .btn-sm {
   padding: 9px 16px;
   font-size: 0.82rem;
@@ -726,6 +741,17 @@ input, select, textarea { font-family:inherit; }
   position: relative;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
+.modal-card.modal-wide {
+  max-width: 1000px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-wide .modal-body {
+  overflow-y: auto;
+  flex: 1;
+}
 .modal-close {
   position: absolute; top: 14px; right: 14px;
   width: 30px; height: 30px;
@@ -743,10 +769,268 @@ input, select, textarea { font-family:inherit; }
   gap: 14px 20px;
   margin-bottom: 24px;
 }
+.modal-body.form-body {
+  grid-template-columns: 1fr;
+  padding: 12px 0;
+}
 .modal-field { display:flex; flex-direction:column; gap:4px; }
 .modal-field .mf-label { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:500; }
 .modal-field .mf-value { font-size:0.87rem; font-weight:500; word-break:break-all; color:var(--white); }
 .modal-actions { display:flex; gap:10px; flex-wrap:wrap; }
+
+/* ── Form Styles ────────────────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 32px;
+  padding: 8px 0;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.form-group label {
+  font-size: 0.85rem;
+  color: var(--white);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--white);
+  font-size: 0.95rem;
+  transition: background var(--trans), border-color var(--trans);
+  font-family: inherit;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  background: rgba(255,255,255,0.08);
+  border-color: var(--red);
+}
+.form-group input::placeholder {
+  color: var(--muted);
+}
+
+/* ── Venue Autocomplete Dropdown ─────────────────────────────────── */
+#venueSuggestionsDropdown {
+  position: absolute;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 400px;
+  overflow-y: scroll;
+  width: 100%;
+  z-index: 1001;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  top: 100%;
+  left: 0;
+  right: 0;
+}
+
+#venueSuggestionsDropdown::-webkit-scrollbar {
+  width: 10px;
+}
+
+#venueSuggestionsDropdown::-webkit-scrollbar-track {
+  background: var(--bg-elevated);
+}
+
+#venueSuggestionsDropdown::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+#venueSuggestionsDropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* ── Delete Confirmation Modal ──────────────────────────────────── */
+.modal-delete {
+  max-width: 420px;
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(224, 48, 42, 0.02) 100%);
+  border: 1px solid rgba(224, 48, 42, 0.1);
+}
+
+.delete-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 24px;
+  background: rgba(214, 57, 70, 0.15);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red);
+}
+
+.delete-icon-wrapper svg {
+  width: 32px;
+  height: 32px;
+}
+
+.delete-title {
+  text-align: center;
+  color: var(--white);
+  margin-bottom: 16px;
+  font-size: 1.3rem;
+}
+
+.delete-body {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.delete-warning {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.delete-event-name {
+  padding: 12px 14px;
+  background: rgba(224, 48, 42, 0.08);
+  border-left: 3px solid var(--red);
+  border-radius: 4px;
+  color: var(--white);
+  font-weight: 600;
+  font-size: 0.95rem;
+  word-break: break-word;
+  margin: 0;
+}
+
+.delete-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-delete-confirm {
+  background: var(--red) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border: none !important;
+  transition: all 0.2s ease;
+}
+
+.btn-delete-confirm:hover {
+  background: #c5262a !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(214, 57, 70, 0.4) !important;
+}
+
+.btn-delete-confirm:active {
+  transform: translateY(0);
+}
+
+/* ── Photo Upload ─────────────────────────────────────────────────── */
+.photo-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 32px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-elevated);
+}
+
+.photo-upload-area:hover {
+  border-color: var(--red);
+  background: rgba(224, 48, 42, 0.05);
+}
+
+.photo-upload-area.drag-active {
+  border-color: var(--red);
+  background: rgba(224, 48, 42, 0.1);
+}
+
+.photo-upload-placeholder {
+  color: var(--muted);
+}
+
+.photo-upload-placeholder svg {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  color: var(--border-mid);
+}
+
+.photo-upload-placeholder p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.photo-upload-placeholder p:first-of-type {
+  color: var(--white);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.photo-upload-hint {
+  font-size: 0.8rem;
+  color: var(--muted) !important;
+}
+
+.photo-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.photo-preview-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  aspect-ratio: 1;
+}
+
+.photo-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 4px;
+  color: var(--red);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: background 0.2s;
+}
+
+.photo-preview-remove:hover {
+  background: var(--red);
+  color: white;
+}
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
 
 /* ── Toast ──────────────────────────────────────────────────── */
 .toast {
@@ -854,7 +1138,7 @@ input, select, textarea { font-family:inherit; }
 
 /* ── User detail page ────────────────────────────────────────── */
 .detail-page {
-  max-width: 980px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 28px 24px 60px;
 }
@@ -951,6 +1235,57 @@ input, select, textarea { font-family:inherit; }
 
 /* ── Clickable table rows ────────────────────────────────────── */
 .clickable-row:hover td { background: rgba(255,255,255,0.03); }
+
+/* ── Payout detail: mini request cards grid ─────────────────── */
+.req-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+a.req-card-mini {
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+a.req-card-mini:hover {
+  border-color: var(--red);
+  background: rgba(231,76,60,0.05);
+}
+.req-card-error {
+  background: rgba(239,83,80,0.06);
+  border: 1px solid rgba(239,83,80,0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: #ef5350;
+  font-size: 0.82rem;
+}
+.req-card-mini-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.req-card-mini-club {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.req-card-mini-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
 
 /* ═══════════════════════════════════════════════════════════
    REPORTS MANAGEMENT
@@ -1463,6 +1798,76 @@ a.req-user-name:hover { color: var(--red); }
   justify-content: flex-end;
   padding-top: 8px;
 }
+
+/* ── Text Input Styling ─────────────────────────────────────── */
+.text-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+  margin-bottom: 12px;
+}
+.text-input:focus {
+  outline: none;
+  border-color: var(--red);
+}
+.text-input::placeholder {
+  color: var(--muted);
+}
+
+/* ── Cockpit Hint ───────────────────────────────────────────── */
+.cockpit-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(224,48,42,0.08);
+  border-left: 2px solid var(--red);
+  border-radius: 4px;
+}
+.cockpit-hint p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── Cockpit Tabs ────────────────────────────────────────────── */
+.cockpit-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.cockpit-tab {
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cockpit-tab:hover {
+  color: var(--text-primary);
+}
+.cockpit-tab.active {
+  color: var(--red);
+  border-bottom-color: var(--red);
+}
+.cockpit-tab-content {
+  display: none;
+}
+.cockpit-tab-content.active {
+  display: block;
+}
+
 @media (max-width: 700px) {
   .misc-gender-row { flex-direction: column; }
 }
@@ -1616,6 +2021,21 @@ a.req-user-name:hover { color: var(--red); }
   margin-bottom: 18px;
 }
 .cancel-banner strong { color: #fff; }
+
+/* ══ Refund banner ═══════════════════════════════════════════════ */
+.refund-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(38,198,130,0.08);
+  border: 1px solid rgba(38,198,130,0.28);
+  border-radius: 8px;
+  color: #26c682;
+  font-size: 0.85rem;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+}
+.refund-banner strong { color: #fff; }
 
 /* ══ Codes section ═══════════════════════════════════════════════ */
 .codes-row {

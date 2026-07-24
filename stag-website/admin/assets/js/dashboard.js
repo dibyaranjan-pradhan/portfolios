@@ -363,10 +363,6 @@
   let reqPage = 1;
 
   // The app endpoint GET /v1/request/user/{userId} requires a valid UUID in the
-  // path, but for admin tokens the service ignores it and returns all users'
-  // requests. We pass the nil UUID as a harmless placeholder.
-  const REQ_PLACEHOLDER_ID = '00000000-0000-0000-0000-000000000000';
-
   async function loadRequests(p) {
     reqPage = p;
     const status = document.getElementById('reqStatusFilter').value;
@@ -375,7 +371,7 @@
     if (status) params.set('status', status);
     if (timeline) params.set('timeline', timeline);
 
-    const json = await apiAbs(API_BASE + '/v1/request/user/' + REQ_PLACEHOLDER_ID + '?' + params);
+    const json = await apiAbs(API_BASE + '/v1/request?' + params);
     if (!json || !Array.isArray(json.items)) { toast('Failed to load requests'); return; }
 
     const items = json.items;
@@ -1471,6 +1467,11 @@
       const el = document.getElementById(id);
       if (el) el.value = json[key] || '';
     });
+    // Load misc feature flag checkboxes
+    const liveEventsEl = document.getElementById('events-liveEventsEnabled');
+    if (liveEventsEl) liveEventsEl.checked = json.liveEventsEnabled || false;
+    const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
+    if (selfieVerifEl) selfieVerifEl.checked = json.selfieVerificationEnabled || false;
     
     _cockpitLoaded = true;
     
@@ -1535,6 +1536,11 @@
       const el = document.getElementById(id);
       payload[key] = el ? el.value : '';
     });
+    // Include feature flag checkboxes
+    const liveEventsEl = document.getElementById('events-liveEventsEnabled');
+    payload.liveEventsEnabled = liveEventsEl ? liveEventsEl.checked : false;
+    const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
+    payload.selfieVerificationEnabled = selfieVerifEl ? selfieVerifEl.checked : false;
     const result = await apiAbs(API_BASE + '/v1/admin/settings', {
       method: 'PATCH',
       body:   JSON.stringify(payload),

@@ -690,7 +690,6 @@
   }
 
   // ── Club Requests tab ────────────────────────────────────────────────────────
-  const REQ_PLACEHOLDER_ID = '00000000-0000-0000-0000-000000000000';
   let userReqPage = 1;
 
   async function loadUserRequests(p) {
@@ -702,7 +701,7 @@
     if (timeline) params.set('timeline', timeline);
 
     const { ok, data } = await apiAbs(
-      API_BASE + '/v1/request/user/' + REQ_PLACEHOLDER_ID + '?' + params
+      API_BASE + '/v1/request?' + params
     );
     const items      = ok && data && Array.isArray(data.items) ? data.items : null;
     const total      = (ok && data && data.total) || 0;

@@ -1419,6 +1419,7 @@
     ['misc-support',        'supportCredentials'],
     ['misc-tnc',            'termsAndConditions'],
     ['misc-privacy',        'privacyPolicy'],
+    ['misc-childSafety',    'childSafetyStandards'],
     ['misc-malePay',        'malePaymentPolicy'],
     ['misc-femPay',         'femalePaymentPolicy'],
     ['misc-maleCancel',     'maleCancellationPolicy'],
@@ -1536,17 +1537,27 @@
       const el = document.getElementById(id);
       payload[key] = el ? el.value : '';
     });
-    // Include feature flag checkboxes
-    const liveEventsEl = document.getElementById('events-liveEventsEnabled');
-    payload.liveEventsEnabled = liveEventsEl ? liveEventsEl.checked : false;
-    const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
-    payload.selfieVerificationEnabled = selfieVerifEl ? selfieVerifEl.checked : false;
     const result = await apiAbs(API_BASE + '/v1/admin/settings', {
       method: 'PATCH',
       body:   JSON.stringify(payload),
     });
     if (!result) { toast('Failed to save miscellaneous settings'); return; }
     toast('Miscellaneous settings saved successfully');
+  }
+
+  async function saveAppConfigs() {
+    const liveEventsEl = document.getElementById('events-liveEventsEnabled');
+    const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
+    const payload = {
+      liveEventsEnabled: liveEventsEl ? liveEventsEl.checked : false,
+      selfieVerificationEnabled: selfieVerifEl ? selfieVerifEl.checked : false,
+    };
+    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
+      method: 'PATCH',
+      body:   JSON.stringify(payload),
+    });
+    if (!result) { toast('Failed to save app configs'); return; }
+    toast('App configs saved successfully');
   }
 
   let _eventsSettingsLoaded = false;
@@ -1582,11 +1593,13 @@
 
   const appVersionBtn = document.getElementById('appVersionSaveBtn');
   const paymentBtn = document.getElementById('paymentSaveBtn');
+  const appConfigsBtn = document.getElementById('appConfigsSaveBtn');
   const miscBtn = document.getElementById('miscSaveBtn');
   const eventsBtn = document.getElementById('eventsSaveBtn');
   
-  if (appVersionBtn) appVersionBtn.addEventListener('click', saveAppVersion);
+  if (appVersionBtn)  appVersionBtn.addEventListener('click', saveAppVersion);
   if (paymentBtn)     paymentBtn.addEventListener('click', savePayment);
+  if (appConfigsBtn)  appConfigsBtn.addEventListener('click', saveAppConfigs);
   if (miscBtn)        miscBtn.addEventListener('click', saveMisc);
   if (eventsBtn)      eventsBtn.addEventListener('click', saveEventsSettings);
 

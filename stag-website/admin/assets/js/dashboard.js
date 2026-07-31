@@ -1537,6 +1537,11 @@
       const el = document.getElementById(id);
       payload[key] = el ? el.value : '';
     });
+    // Include feature flag checkboxes
+    const liveEventsEl = document.getElementById('events-liveEventsEnabled');
+    payload.liveEventsEnabled = liveEventsEl ? liveEventsEl.checked : false;
+    const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
+    payload.selfieVerificationEnabled = selfieVerifEl ? selfieVerifEl.checked : false;
     const result = await apiAbs(API_BASE + '/v1/admin/settings', {
       method: 'PATCH',
       body:   JSON.stringify(payload),

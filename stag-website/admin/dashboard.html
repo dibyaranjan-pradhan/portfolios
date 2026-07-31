@@ -377,6 +377,7 @@
       <div class="cockpit-tabs">
         <button class="cockpit-tab active" data-tab="app-version">App Version</button>
         <button class="cockpit-tab" data-tab="payment">Payment</button>
+        <button class="cockpit-tab" data-tab="app-configs">App Configs</button>
         <button class="cockpit-tab" data-tab="misc">Miscellaneous</button>
       </div>
 
@@ -461,6 +462,29 @@
         </div>
       </div>
 
+      <!-- ── App Configs Tab ── -->
+      <div class="cockpit-tab-content" id="cockpit-tab-app-configs">
+        <div class="misc-group">
+          <h4 class="misc-group-title">Feature Flags</h4>
+
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px;">
+            <input type="checkbox" id="events-liveEventsEnabled" style="width: 18px; height: 18px; cursor: pointer;" />
+            <span>Enable Live Events</span>
+          </label>
+          <p class="cockpit-hint" style="margin-bottom: 14px; margin-left: 26px;">When enabled, the Events tab and event-related features are visible to users in the app.</p>
+
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px;">
+            <input type="checkbox" id="misc-selfieVerificationEnabled" style="width: 18px; height: 18px; cursor: pointer;" />
+            <span>Enable Selfie Verification</span>
+          </label>
+          <p class="cockpit-hint" style="margin-left: 26px;">When enabled, unverified users will be prompted in the app to take a selfie and verify their identity against their profile picture using AWS Rekognition. Verified profiles are shown with a badge and get priority in requests.</p>
+        </div>
+
+        <div class="misc-footer">
+          <button class="btn-sm btn-primary" id="appConfigsSaveBtn">Save App Configs</button>
+        </div>
+      </div>
+
       <!-- ── Miscellaneous Tab ── -->
       <div class="cockpit-tab-content" id="cockpit-tab-misc">
         <!-- Guidelines -->
@@ -503,6 +527,8 @@
           <textarea id="misc-tnc" class="misc-textarea" rows="10" placeholder="By using this app you agree to..."></textarea>
           <p class="misc-col-label" style="margin-top:14px">Privacy Policy</p>
           <textarea id="misc-privacy" class="misc-textarea" rows="10" placeholder="We collect the following data..."></textarea>
+          <p class="misc-col-label" style="margin-top:14px">Child Safety Standards</p>
+          <textarea id="misc-childSafety" class="misc-textarea" rows="10" placeholder="Maatli has zero tolerance for child sexual abuse and exploitation..."></textarea>
         </div>
 
         <!-- Payment Policy -->

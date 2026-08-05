@@ -1503,6 +1503,7 @@
     ['misc-tnc',            'termsAndConditions'],
     ['misc-privacy',        'privacyPolicy'],
     ['misc-childSafety',    'childSafetyStandards'],
+    ['misc-childSafety',    'childSafetyStandards'],
     ['misc-malePay',        'malePaymentPolicy'],
     ['misc-femPay',         'femalePaymentPolicy'],
     ['misc-maleCancel',     'maleCancellationPolicy'],
@@ -1689,11 +1690,14 @@
   const appVersionBtn = document.getElementById('appVersionSaveBtn');
   const paymentBtn = document.getElementById('paymentSaveBtn');
   const appConfigsBtn = document.getElementById('appConfigsSaveBtn');
+  const appConfigsBtn = document.getElementById('appConfigsSaveBtn');
   const miscBtn = document.getElementById('miscSaveBtn');
   const eventsBtn = document.getElementById('eventsSaveBtn');
   
   if (appVersionBtn)  appVersionBtn.addEventListener('click', saveAppVersion);
+  if (appVersionBtn)  appVersionBtn.addEventListener('click', saveAppVersion);
   if (paymentBtn)     paymentBtn.addEventListener('click', savePayment);
+  if (appConfigsBtn)  appConfigsBtn.addEventListener('click', saveAppConfigs);
   if (appConfigsBtn)  appConfigsBtn.addEventListener('click', saveAppConfigs);
   if (miscBtn)        miscBtn.addEventListener('click', saveMisc);
   if (eventsBtn)      eventsBtn.addEventListener('click', saveEventsSettings);

@@ -272,6 +272,22 @@
         We'd love to hear from you. Fill in the form and our team will
         get back to you within 24 hours.
       </p>
+      <div class="s-contact__partner">
+        <span class="s-contact__partner-label">For Clubs &amp; Event Companies</span>
+        <h3>Bring your next event to the STAG community.</h3>
+        <p>
+          Want users to discover and attend your club night or event through STAG?
+          Tell us about it and our team will help you explore event listing and
+          promotion opportunities on the platform.
+        </p>
+        <a
+          class="s-contact__partner-link"
+          href="mailto:info@stag.org.in?subject=Event%20partnership%20enquiry"
+        >
+          Email us about your event
+          <span aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
       <div class="s-contact__details">
         <div class="s-contact__detail-row">
           <span class="detail-label">Email Us</span>
@@ -291,7 +307,7 @@
     <form class="s-contact__form" id="contactForm" novalidate>
       <input  type="text"  class="s-input" id="contactName"  placeholder="Full Name"      required autocomplete="name" />
       <input  type="email" class="s-input" id="contactEmail" placeholder="Email"           required autocomplete="email" />
-      <textarea            class="s-input" id="contactMsg"   placeholder="Your message..." required rows="5"></textarea>
+      <textarea            class="s-input" id="contactMsg"   placeholder="Tell us about your club, event, or partnership idea..." required rows="5"></textarea>
       <button type="submit" class="s-submit">Submit</button>
     </form>
 
@@ -378,8 +394,39 @@
     var msg   = document.getElementById('contactMsg').value.trim();
     if (!name || !email || !msg) { showToast('Please fill in all fields.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Please enter a valid email address.'); return; }
-    form.reset();
-    showToast('Message sent! We\'ll get back to you soon.');
+    var apiBase = window.STAG_API_BASE || (
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:8080/stag'
+        : window.location.origin + '/stag'
+    );
+    var submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Sending...';
+    fetch(apiBase.replace(/\/$/, '') + '/v1/salesLeads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, email: email, message: msg })
+    })
+      .then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) throw new Error(data.message || 'Unable to submit enquiry');
+          return data;
+        });
+      })
+      .then(function () {
+        form.reset();
+        showToast('Thanks for reaching out. Our team will contact you soon.');
+      })
+      .catch(function () {
+        var subject = encodeURIComponent('STAG partnership or contact enquiry');
+        var body = encodeURIComponent('Name: ' + name + '\nReply email: ' + email + '\n\nMessage:\n' + msg);
+        window.location.href = 'mailto:info@stag.org.in?subject=' + subject + '&body=' + body;
+        showToast('We opened an email draft so you can send your enquiry.');
+      })
+      .finally(function () {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit';
+      });
   });
 })();
 </script>

@@ -70,6 +70,13 @@
         <span class="nav-label">Events</span>
       </a>
 
+      <a href="#" class="nav-item" data-section="salesLeads">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        </span>
+        <span class="nav-label">Leads</span>
+      </a>
+
       <p class="nav-group-label">Moderation</p>
 
       <a href="#" class="nav-item" data-section="reports">
@@ -311,6 +318,38 @@
       <div class="pagination" id="supportPagination"></div>
     </section>
 
+    <!-- ══ LEADS ══ -->
+    <section class="section hidden" id="section-salesLeads">
+      <div class="section-intro">
+        <h3 class="section-title">Sales Leads</h3>
+        <p class="section-desc">Review enquiries submitted through the website contact form.</p>
+      </div>
+      <div class="table-toolbar">
+        <button class="btn-sm btn-primary" id="salesLeadsRefreshBtn">Refresh Sales Leads</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="salesLeadsTable">
+          <thead><tr><th>Name</th><th>Email</th><th>Enquiry</th><th>Submitted</th></tr></thead>
+          <tbody id="salesLeadsBody"></tbody>
+        </table>
+        <div class="table-empty hidden" id="salesLeadsEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          <p>No sales leads found</p>
+        </div>
+      </div>
+      <div class="pagination" id="salesLeadsPagination"></div>
+    </section>
+
+    <!-- ══ SALES LEAD DETAIL ══ -->
+    <section class="section hidden" id="section-salesLeadDetail">
+      <div class="section-intro sales-lead-detail-header">
+        <button class="btn-sm btn-ghost" id="salesLeadBackBtn">&larr; Back to Sales Leads</button>
+        <h3 class="section-title">Sales Lead Details</h3>
+        <p class="section-desc">Review the complete enquiry submitted through the website.</p>
+      </div>
+      <div class="sales-lead-detail-card" id="salesLeadDetailCard"></div>
+    </section>
+
     <!-- ══ EVENTS ══ -->
     <section class="section hidden" id="section-events">
       <div class="section-intro">
@@ -477,7 +516,25 @@
             <input type="checkbox" id="misc-selfieVerificationEnabled" style="width: 18px; height: 18px; cursor: pointer;" />
             <span>Enable Selfie Verification</span>
           </label>
-          <p class="cockpit-hint" style="margin-left: 26px;">When enabled, unverified users will be prompted in the app to take a selfie and verify their identity against their profile picture using AWS Rekognition. Verified profiles are shown with a badge and get priority in requests.</p>
+          <p class="cockpit-hint" style="margin-bottom: 14px; margin-left: 26px;">When enabled, unverified users will be prompted in the app to take a selfie and verify their identity against their profile picture using AWS Rekognition. Verified profiles are shown with a badge and get priority in requests.</p>
+
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px;">
+            <input type="checkbox" id="appconfig-showLastSearchedClubsForMale" style="width: 18px; height: 18px; cursor: pointer;" />
+            <span>Show Last Searched Clubs for Male User</span>
+          </label>
+          <p class="cockpit-hint" style="margin-bottom: 14px; margin-left: 26px;">When enabled, male users see a "Last Searched Clubs" section on their Home screen showing clubs/areas they recently searched for.</p>
+
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px;">
+            <input type="checkbox" id="appconfig-showLastBookedPlaces" style="width: 18px; height: 18px; cursor: pointer;" />
+            <span>Show Last Booked Places</span>
+          </label>
+          <p class="cockpit-hint" style="margin-bottom: 14px; margin-left: 26px;">When enabled, users see a "Recently Booked Clubs" section on their Home screen showing places they've previously booked.</p>
+
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px;">
+            <input type="checkbox" id="appconfig-showTopVisitedPlacesNearby" style="width: 18px; height: 18px; cursor: pointer;" />
+            <span>Show Top Visited Place Nearby</span>
+          </label>
+          <p class="cockpit-hint" style="margin-left: 26px;">When enabled, users see a "Top Visited Places Nearby" section listing the places with the most club visit plans created by fUsers this week, filtered to their nearby area.</p>
         </div>
 
         <div class="misc-footer">
@@ -507,11 +564,11 @@
 
         <!-- FAQs -->
         <div class="misc-group">
-          <h4 class="misc-group-title">FAQs <span class="misc-hint">(one entry per line)</span></h4>
+          <h4 class="misc-group-title">FAQs <span class="misc-hint">(one entry per line, use Question | Answer)</span></h4>
           <p class="misc-col-label">Male</p>
           <textarea id="misc-maleFaq" class="misc-textarea" rows="7" placeholder="How does payment work? You pay after the request is confirmed.&#10;..."></textarea>
           <p class="misc-col-label" style="margin-top:14px">Female</p>
-          <textarea id="misc-femFaq" class="misc-textarea" rows="7" placeholder="How do I accept a request? Go to your requests tab and tap Accept.&#10;..."></textarea>
+          <textarea id="misc-femFaq" class="misc-textarea" rows="7" placeholder="How do I accept a request? | Go to your Requests tab and tap Accept.&#10;..."></textarea>
         </div>
 
         <!-- Support Credentials -->
@@ -562,23 +619,6 @@
         <div class="misc-group">
           <h4 class="misc-group-title">Disclaimer Points <span class="misc-hint">(one point per line, applies to all users)</span></h4>
           <textarea id="misc-disclaimerPoints" class="misc-textarea" rows="7" placeholder="I understand STAG is a platform that facilitates social meetups between users and is not an insurer or guarantor of personal conduct.&#10;I agree to assess my surroundings, use good judgment, and prioritize my own safety at all times.&#10;..."></textarea>
-        </div>
-
-        <!-- Feature Flags -->
-        <div class="misc-group">
-          <h4 class="misc-group-title">Feature Flags</h4>
-
-          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px;">
-            <input type="checkbox" id="events-liveEventsEnabled" style="width: 18px; height: 18px; cursor: pointer;" />
-            <span>Enable Live Events</span>
-          </label>
-          <p class="cockpit-hint" style="margin-bottom: 14px; margin-left: 26px;">When enabled, the Events tab and event-related features are visible to users in the app.</p>
-
-          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px;">
-            <input type="checkbox" id="misc-selfieVerificationEnabled" style="width: 18px; height: 18px; cursor: pointer;" />
-            <span>Enable Selfie Verification</span>
-          </label>
-          <p class="cockpit-hint" style="margin-left: 26px;">When enabled, unverified users will be prompted in the app to take a selfie and verify their identity against their profile picture using AWS Rekognition. Verified profiles are shown with a badge and get priority in requests.</p>
         </div>
 
         <div class="misc-footer">

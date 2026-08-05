@@ -510,6 +510,46 @@ input, select, textarea { font-family:inherit; }
 }
 .data-table tbody tr:hover { background: rgba(255,255,255,0.025); }
 
+.sales-lead-row { cursor: pointer; }
+.sales-lead-row:focus { outline: 2px solid var(--red); outline-offset: -2px; }
+.sales-lead-detail-header { margin-bottom: 24px; }
+.sales-lead-detail-header .section-title { margin-top: 18px; }
+.sales-lead-detail-card {
+  max-width: 900px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+}
+.sales-lead-detail-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.sales-lead-detail-topline h4 { font-size: 1.35rem; margin-top: 7px; }
+.sales-lead-detail-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sales-lead-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sales-lead-detail-grid > div { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.sales-lead-detail-grid a { color: #ff7770; overflow-wrap: anywhere; }
+.sales-lead-detail-message { padding-top: 24px; }
+.sales-lead-detail-message p { color: var(--muted-mid); line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 10px; }
+
 .table-empty {
   display: flex;
   flex-direction: column;

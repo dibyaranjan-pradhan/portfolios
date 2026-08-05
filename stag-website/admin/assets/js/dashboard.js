@@ -175,10 +175,10 @@
   }
 
   // ── Navigation ───────────────────────────────────────────────────────────────
-  const sections = ['overview', 'users', 'requests', 'reports', 'support', 'events', 'cockpit'];
+  const sections = ['overview', 'users', 'requests', 'reports', 'support', 'events', 'salesLeads', 'salesLeadDetail', 'cockpit'];
   const sectionTitles = {
     overview: 'Overview', users: 'Users', requests: 'Club Requests',
-    reports: 'Reports', support: 'Support Tickets', events: 'Events Management', cockpit: 'Cockpit',
+    reports: 'Reports', support: 'Support Tickets', events: 'Events Management', salesLeads: 'Sales Leads', salesLeadDetail: 'Sales Lead Details', cockpit: 'Cockpit',
   };
 
   function activateSection(name) {
@@ -197,6 +197,7 @@
     if (name === 'reports')   loadReports(1);
     if (name === 'support')   loadSupport(1);
     if (name === 'events')    loadEvents();
+    if (name === 'salesLeads') loadSalesLeads(1);
     if (name === 'cockpit')   loadCockpit();
 
     // close sidebar on mobile
@@ -751,6 +752,88 @@
 
   document.getElementById('supportSearchBtn').addEventListener('click', () => loadSupport(1));
   document.getElementById('supportStatusFilter').addEventListener('change', () => loadSupport(1));
+
+  // ── Sales Leads ─────────────────────────────────────────────────────────────
+  let salesLeadsPage = 1;
+  const salesLeadsCache = new Map();
+
+  async function loadSalesLeads(p) {
+    salesLeadsPage = p;
+    const params = new URLSearchParams({ page: p, limit: 20 });
+    const json = await apiAbs(API_BASE + '/v1/salesLeads?' + params);
+    const tbody = document.getElementById('salesLeadsBody');
+    const empty = document.getElementById('salesLeadsEmpty');
+    if (!json || !Array.isArray(json.items)) { toast('Failed to load sales leads'); return; }
+
+    if (json.items.length === 0) {
+      tbody.innerHTML = '';
+      empty.classList.remove('hidden');
+      document.getElementById('salesLeadsPagination').innerHTML = '';
+      return;
+    }
+    empty.classList.add('hidden');
+    json.items.forEach(lead => salesLeadsCache.set(lead.id, lead));
+    tbody.innerHTML = json.items.map(lead => `
+      <tr class="sales-lead-row" data-lead-id="${esc(lead.id)}" tabindex="0" role="button">
+        <td><strong>${esc(lead.name)}</strong></td>
+        <td><a href="mailto:${esc(lead.email)}">${esc(lead.email)}</a></td>
+        <td style="max-width:420px;white-space:pre-wrap;color:var(--muted)">${esc(lead.message)}</td>
+        <td style="color:var(--muted);white-space:nowrap">${fmtDateTime(lead.createdAt)}</td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.sales-lead-row').forEach(row => {
+      const open = () => openSalesLeadDetail(row.dataset.leadId);
+      row.addEventListener('click', open);
+      row.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          open();
+        }
+      });
+    });
+
+    const totalPages = Math.max(1, Math.ceil((json.total || 0) / (json.limit || 20)));
+    renderPagination('salesLeadsPagination', p, totalPages, loadSalesLeads);
+  }
+
+  document.getElementById('salesLeadsRefreshBtn').addEventListener('click', () => loadSalesLeads(salesLeadsPage));
+
+  function openSalesLeadDetail(leadId) {
+    const lead = salesLeadsCache.get(leadId);
+    if (!lead) {
+      toast('Sales lead details are unavailable. Refresh the list and try again.');
+      return;
+    }
+    document.querySelectorAll('.section').forEach(section => section.classList.add('hidden'));
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    document.getElementById('section-salesLeadDetail').classList.remove('hidden');
+    document.getElementById('pageTitle').textContent = 'Sales Lead Details';
+    document.getElementById('salesLeadDetailCard').innerHTML = `
+      <div class="sales-lead-detail-topline">
+        <div>
+          <p class="sales-lead-detail-label">Contact</p>
+          <h4>${esc(lead.name)}</h4>
+        </div>
+        <a class="btn-sm btn-primary" href="mailto:${esc(lead.email)}">Email Lead</a>
+      </div>
+      <div class="sales-lead-detail-grid">
+        <div><span class="sales-lead-detail-label">Email</span><a href="mailto:${esc(lead.email)}">${esc(lead.email)}</a></div>
+        <div><span class="sales-lead-detail-label">Submitted</span><span>${fmtDateTime(lead.createdAt)}</span></div>
+        <div><span class="sales-lead-detail-label">Source</span><span>${esc(lead.source || 'Website contact form')}</span></div>
+        <div><span class="sales-lead-detail-label">Lead ID</span><span>${esc(lead.id)}</span></div>
+      </div>
+      <div class="sales-lead-detail-message">
+        <span class="sales-lead-detail-label">Enquiry</span>
+        <p>${esc(lead.message)}</p>
+      </div>
+    `;
+  }
+
+  document.getElementById('salesLeadBackBtn').addEventListener('click', () => {
+    document.getElementById('section-salesLeadDetail').classList.add('hidden');
+    activateSection('salesLeads');
+  });
 
   // ── Events ──────────────────────────────────────────────────────────────────
   let currentEventPage = 1;
@@ -1473,6 +1556,12 @@
     if (liveEventsEl) liveEventsEl.checked = json.liveEventsEnabled || false;
     const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
     if (selfieVerifEl) selfieVerifEl.checked = json.selfieVerificationEnabled || false;
+    const showLastSearchedEl = document.getElementById('appconfig-showLastSearchedClubsForMale');
+    if (showLastSearchedEl) showLastSearchedEl.checked = json.showLastSearchedClubsForMale || false;
+    const showLastBookedEl = document.getElementById('appconfig-showLastBookedPlaces');
+    if (showLastBookedEl) showLastBookedEl.checked = json.showLastBookedPlaces || false;
+    const showTopVisitedEl = document.getElementById('appconfig-showTopVisitedPlacesNearby');
+    if (showTopVisitedEl) showTopVisitedEl.checked = json.showTopVisitedPlacesNearby || false;
     
     _cockpitLoaded = true;
     
@@ -1537,11 +1626,6 @@
       const el = document.getElementById(id);
       payload[key] = el ? el.value : '';
     });
-    // Include feature flag checkboxes
-    const liveEventsEl = document.getElementById('events-liveEventsEnabled');
-    payload.liveEventsEnabled = liveEventsEl ? liveEventsEl.checked : false;
-    const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
-    payload.selfieVerificationEnabled = selfieVerifEl ? selfieVerifEl.checked : false;
     const result = await apiAbs(API_BASE + '/v1/admin/settings', {
       method: 'PATCH',
       body:   JSON.stringify(payload),
@@ -1553,9 +1637,15 @@
   async function saveAppConfigs() {
     const liveEventsEl = document.getElementById('events-liveEventsEnabled');
     const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
+    const showLastSearchedEl = document.getElementById('appconfig-showLastSearchedClubsForMale');
+    const showLastBookedEl = document.getElementById('appconfig-showLastBookedPlaces');
+    const showTopVisitedEl = document.getElementById('appconfig-showTopVisitedPlacesNearby');
     const payload = {
       liveEventsEnabled: liveEventsEl ? liveEventsEl.checked : false,
       selfieVerificationEnabled: selfieVerifEl ? selfieVerifEl.checked : false,
+      showLastSearchedClubsForMale: showLastSearchedEl ? showLastSearchedEl.checked : false,
+      showLastBookedPlaces: showLastBookedEl ? showLastBookedEl.checked : false,
+      showTopVisitedPlacesNearby: showTopVisitedEl ? showTopVisitedEl.checked : false,
     };
     const result = await apiAbs(API_BASE + '/v1/admin/settings', {
       method: 'PATCH',

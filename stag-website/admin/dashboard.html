@@ -63,6 +63,13 @@
         <span class="nav-label">Club Requests</span>
       </a>
 
+      <a href="#rewards" class="nav-item" data-section="rewards">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3z"/></svg>
+        </span>
+        <span class="nav-label">Rewards</span>
+      </a>
+
       <a href="#" class="nav-item" data-section="events">
         <span class="nav-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -100,6 +107,13 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/></svg>
         </span>
         <span class="nav-label">Cockpit</span>
+      </a>
+
+      <a href="#" class="nav-item" data-section="subscription">
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>
+        </span>
+        <span class="nav-label">Subscription Management</span>
       </a>
     </nav>
 
@@ -244,6 +258,56 @@
         <div class="table-empty hidden" id="requestsEmpty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><p>No requests found</p></div>
       </div>
       <div class="pagination" id="requestsPagination"></div>
+    </section>
+
+    <!-- ══ REWARDS ══ -->
+    <section class="section hidden" id="section-rewards">
+      <div class="section-intro">
+        <h3 class="section-title">Rewards</h3>
+        <p class="section-desc">Configure reward rules and review how users earn points.</p>
+      </div>
+
+      <div class="reward-tabs" role="tablist" aria-label="Rewards sections">
+        <button type="button" class="reward-tab active" data-reward-tab="rules" role="tab" aria-selected="true">Reward Rules</button>
+        <button type="button" class="reward-tab" data-reward-tab="users" role="tab" aria-selected="false">User Rewards</button>
+      </div>
+
+      <div class="reward-tab-panel active" id="reward-panel-rules" role="tabpanel">
+        <div class="reward-config-grid">
+          <div class="misc-group">
+            <h4 class="misc-group-title">Point Rules</h4>
+            <label class="misc-col-label" for="reward-pointsPerClubVisit">Points per completed club visit</label>
+            <input type="number" min="1" id="reward-pointsPerClubVisit" class="text-input" />
+            <label class="misc-col-label" for="reward-referralPoints">Referrer reward points</label>
+            <input type="number" min="1" id="reward-referralPoints" class="text-input" />
+            <label class="misc-col-label" for="reward-referralSignupPoints">Referred user reward points</label>
+            <input type="number" min="1" id="reward-referralSignupPoints" class="text-input" />
+          </div>
+          <div class="misc-group">
+            <h4 class="misc-group-title">Level Names &amp; Thresholds</h4>
+            <div class="reward-level-row"><input type="text" id="reward-level1Name" class="text-input" placeholder="Level 1 name" /><input type="number" min="0" id="reward-level1MinPoints" class="text-input" placeholder="Minimum points" /></div>
+            <div class="reward-level-row"><input type="text" id="reward-level2Name" class="text-input" placeholder="Level 2 name" /><input type="number" min="0" id="reward-level2MinPoints" class="text-input" placeholder="Minimum points" /></div>
+            <div class="reward-level-row"><input type="text" id="reward-level3Name" class="text-input" placeholder="Level 3 name" /><input type="number" min="0" id="reward-level3MinPoints" class="text-input" placeholder="Minimum points" /></div>
+            <div class="reward-level-row"><input type="text" id="reward-level4Name" class="text-input" placeholder="Level 4 name" /><input type="number" min="0" id="reward-level4MinPoints" class="text-input" placeholder="Minimum points" /></div>
+          </div>
+        </div>
+        <div class="misc-footer"><button class="btn-sm btn-primary" id="rewardSaveBtn">Save Reward Settings</button></div>
+      </div>
+
+      <div class="reward-tab-panel" id="reward-panel-users" role="tabpanel" hidden>
+        <div class="section-intro reward-users-heading">
+          <h4 class="section-title">User Reward Balances</h4>
+          <p class="section-desc">Current points and the complete earning history for each user.</p>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="rewardsTable">
+            <thead><tr><th>User</th><th>Email</th><th>Points</th><th>Earned From</th><th>Last Activity</th></tr></thead>
+            <tbody id="rewardsBody"></tbody>
+          </table>
+          <div class="table-empty hidden" id="rewardsEmpty"><p>No reward activity found</p></div>
+        </div>
+        <div class="pagination" id="rewardsPagination"></div>
+      </div>
     </section>
 
     <!-- ══ REPORTS ══ -->
@@ -519,6 +583,12 @@
           <p class="cockpit-hint" style="margin-bottom: 14px; margin-left: 26px;">When enabled, unverified users will be prompted in the app to take a selfie and verify their identity against their profile picture using AWS Rekognition. Verified profiles are shown with a badge and get priority in requests.</p>
 
           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px;">
+            <input type="checkbox" id="appconfig-referAFriendEnabled" style="width: 18px; height: 18px; cursor: pointer;" />
+            <span>Enable Refer a Friend</span>
+          </label>
+          <p class="cockpit-hint" style="margin-bottom: 14px; margin-left: 26px;">When enabled, users can access referral features during registration and from Settings.</p>
+
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 6px;">
             <input type="checkbox" id="appconfig-showLastSearchedClubsForMale" style="width: 18px; height: 18px; cursor: pointer;" />
             <span>Show Last Searched Clubs for Male User</span>
           </label>
@@ -627,6 +697,36 @@
       </div>
     </section>
 
+    <!-- SUBSCRIPTION MANAGEMENT -->
+    <section class="section hidden" id="section-subscription">
+      <div class="section-intro">
+        <h3 class="section-title">Subscription Management</h3>
+        <p class="section-desc">Control the daily request allowance and request-credit packages shown to users.</p>
+      </div>
+
+      <div class="misc-group">
+        <h4 class="misc-group-title">Daily Request Allowance</h4>
+        <p class="misc-col-label">Free requests per user per UTC day</p>
+        <div style="display:flex; gap:10px; align-items:center; max-width:420px;">
+          <input type="number" id="subscription-dailyRequestLimit" class="text-input" min="1" step="1" placeholder="10" />
+          <button class="btn-sm btn-primary" id="subscriptionDailyLimitSaveBtn" type="button">Save Allowance</button>
+        </div>
+        <div class="cockpit-hint"><p>Users consume this allowance first. After it is exhausted, purchased credits are used.</p></div>
+      </div>
+
+      <div class="misc-group">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
+          <div>
+            <h4 class="misc-group-title" style="margin-bottom:4px;">Request Packages</h4>
+            <p class="cockpit-hint" style="margin:0;">Credits expire after the configured number of days from purchase. Use 0 for no expiry.</p>
+          </div>
+          <button class="btn-sm btn-primary" id="subscriptionAddPackageBtn" type="button">Create Package</button>
+        </div>
+        <div id="subscriptionPackages"></div>
+        <div id="subscriptionPackagesEmpty" class="table-empty">No request packages configured.</div>
+      </div>
+
+    </section>
   </main>
 
   <!-- ═══════════════════════════ EVENT FORM MODAL ════════════════════ -->
@@ -751,6 +851,28 @@
     </div>
   </div>
 
+  <!-- ═════════════════════ PACKAGE ACTION CONFIRMATION ═══════════════════ -->
+  <div class="modal-overlay hidden" id="packageActionModal">
+    <div class="modal-card modal-delete">
+      <div class="delete-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+      </div>
+      <h3 class="modal-title delete-title" id="packageActionTitle">Confirm Package Action</h3>
+      <div class="modal-body delete-body">
+        <p class="delete-warning" id="packageActionMessage"></p>
+        <div class="delete-event-name" id="packageActionName"></div>
+      </div>
+      <div class="modal-actions delete-actions">
+        <button class="btn-sm btn-ghost" id="packageActionCancel">Cancel</button>
+        <button class="btn-sm btn-primary" id="packageActionConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════════════════════ USER DETAIL MODAL ════════════════════ -->
   <div class="modal-overlay hidden" id="userModal">
     <div class="modal-card">
@@ -785,6 +907,6 @@
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
   <script src="assets/js/config.js?v=6"></script>
-  <script src="assets/js/dashboard.js?v=6"></script>
+  <script src="assets/js/dashboard.js?v=7"></script>
 </body>
 </html>

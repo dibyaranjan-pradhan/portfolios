@@ -175,10 +175,10 @@
   }
 
   // ── Navigation ───────────────────────────────────────────────────────────────
-  const sections = ['overview', 'users', 'requests', 'reports', 'support', 'events', 'salesLeads', 'salesLeadDetail', 'cockpit'];
+  const sections = ['overview', 'users', 'requests', 'rewards', 'reports', 'support', 'events', 'salesLeads', 'salesLeadDetail', 'cockpit', 'subscription'];
   const sectionTitles = {
-    overview: 'Overview', users: 'Users', requests: 'Club Requests',
-    reports: 'Reports', support: 'Support Tickets', events: 'Events Management', salesLeads: 'Sales Leads', salesLeadDetail: 'Sales Lead Details', cockpit: 'Cockpit',
+    overview: 'Overview', users: 'Users', requests: 'Club Requests', rewards: 'Rewards',
+    reports: 'Reports', support: 'Support Tickets', events: 'Events Management', salesLeads: 'Sales Leads', salesLeadDetail: 'Sales Lead Details', cockpit: 'Cockpit', subscription: 'Subscription Management',
   };
 
   function activateSection(name) {
@@ -194,11 +194,13 @@
     if (name === 'overview')  loadStats();
     if (name === 'users')     loadUsers(1);
     if (name === 'requests')  loadRequests(1);
+    if (name === 'rewards') loadRewardSettings();
     if (name === 'reports')   loadReports(1);
     if (name === 'support')   loadSupport(1);
     if (name === 'events')    loadEvents();
     if (name === 'salesLeads') loadSalesLeads(1);
     if (name === 'cockpit')   loadCockpit();
+    if (name === 'subscription') loadSubscriptionSettings();
 
     // close sidebar on mobile
     document.getElementById('sidebar').classList.remove('open');
@@ -206,6 +208,23 @@
 
   document.querySelectorAll('.nav-item').forEach(el => {
     el.addEventListener('click', e => { e.preventDefault(); activateSection(el.dataset.section); });
+  });
+
+  document.querySelectorAll('.reward-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const selectedTab = tab.dataset.rewardTab;
+      document.querySelectorAll('.reward-tab').forEach(item => {
+        const isSelected = item === tab;
+        item.classList.toggle('active', isSelected);
+        item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+      });
+      document.querySelectorAll('.reward-tab-panel').forEach(panel => {
+        const isSelected = panel.id === 'reward-panel-' + selectedTab;
+        panel.classList.toggle('active', isSelected);
+        panel.hidden = !isSelected;
+      });
+      if (selectedTab === 'users') loadRewards(1);
+    });
   });
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -239,6 +258,93 @@
       if (card) card.classList.remove('loading');
     });
   }
+
+  // ── Rewards ─────────────────────────────────────────────────────────────────
+  let rewardPage = 1;
+  let rewardSettingsLoaded = false;
+
+  function setRewardField(id, value) {
+    const el = document.getElementById(id);
+    if (el && value != null) el.value = value;
+  }
+
+  async function loadRewardSettings() {
+    if (rewardSettingsLoaded) return;
+    const settings = await apiAbs(API_BASE + '/v1/admin/settings');
+    if (!settings) { toast('Failed to load reward settings'); return; }
+    setRewardField('reward-pointsPerClubVisit', settings.rewardPointsPerClubVisit || 10);
+    setRewardField('reward-referralPoints', settings.referralRewardPoints || 25);
+    setRewardField('reward-referralSignupPoints', settings.referralSignupRewardPoints || 10);
+    setRewardField('reward-level1Name', settings.rewardLevel1Name || 'Excellent');
+    setRewardField('reward-level2Name', settings.rewardLevel2Name || 'Pro');
+    setRewardField('reward-level3Name', settings.rewardLevel3Name || 'Legend');
+    setRewardField('reward-level4Name', settings.rewardLevel4Name || 'GOAT');
+    setRewardField('reward-level1MinPoints', settings.rewardLevel1MinPoints || 0);
+    setRewardField('reward-level2MinPoints', settings.rewardLevel2MinPoints || 100);
+    setRewardField('reward-level3MinPoints', settings.rewardLevel3MinPoints || 250);
+    setRewardField('reward-level4MinPoints', settings.rewardLevel4MinPoints || 500);
+    rewardSettingsLoaded = true;
+  }
+
+  async function saveRewardSettings() {
+    const value = id => document.getElementById(id)?.value;
+    const payload = {
+      rewardPointsPerClubVisit: Number(value('reward-pointsPerClubVisit')),
+      referralRewardPoints: Number(value('reward-referralPoints')),
+      referralSignupRewardPoints: Number(value('reward-referralSignupPoints')),
+      rewardLevel1Name: value('reward-level1Name'), rewardLevel2Name: value('reward-level2Name'),
+      rewardLevel3Name: value('reward-level3Name'), rewardLevel4Name: value('reward-level4Name'),
+      rewardLevel1MinPoints: Number(value('reward-level1MinPoints')), rewardLevel2MinPoints: Number(value('reward-level2MinPoints')),
+      rewardLevel3MinPoints: Number(value('reward-level3MinPoints')), rewardLevel4MinPoints: Number(value('reward-level4MinPoints')),
+    };
+    if (Object.values(payload).some(v => v === '' || v == null || (typeof v === 'number' && (!Number.isFinite(v) || v < 0)))) {
+      toast('Enter valid reward settings');
+      return;
+    }
+    const result = await apiAbs(API_BASE + '/v1/admin-dash/rewards/settings', { method: 'PATCH', body: JSON.stringify(payload) });
+    if (!result) { toast('Failed to save reward settings'); return; }
+    rewardSettingsLoaded = false;
+    toast('Reward settings saved successfully');
+  }
+
+  function rewardHistoryHtml(history) {
+    if (!history || history.length === 0) return '<span style="color:var(--muted)">No activity</span>';
+    return `<details><summary class="reward-history-toggle">${history.length} transaction${history.length === 1 ? '' : 's'}</summary><ul class="reward-history-list">${history.map(entry => {
+      const points = Number(entry.points || 0);
+      return `<li><span><strong>${esc(entry.description || entry.type || 'Reward')}</strong><br/>${fmtDateTime(entry.createdAt)}</span><span class="reward-points ${points < 0 ? 'reward-negative' : ''}">${points > 0 ? '+' : ''}${points}</span></li>`;
+    }).join('')}</ul></details>`;
+  }
+
+  async function loadRewards(page) {
+    rewardPage = page;
+    const json = await apiAbs(API_BASE + '/v1/admin-dash/rewards?page=' + page + '&limit=20');
+    if (!json || !Array.isArray(json.items)) { toast('Failed to load rewards'); return; }
+    const tbody = document.getElementById('rewardsBody');
+    const empty = document.getElementById('rewardsEmpty');
+    if (json.items.length === 0) {
+      tbody.innerHTML = '';
+      empty.classList.remove('hidden');
+      document.getElementById('rewardsPagination').innerHTML = '';
+      return;
+    }
+    empty.classList.add('hidden');
+    tbody.innerHTML = json.items.map(user => {
+      const history = user.history || [];
+      const latest = history[0];
+      return `<tr class="reward-user-row" tabindex="0" role="link" data-reward-user-id="${esc(user.id)}" aria-label="View reward details for ${esc(user.name || 'user')}"><td>${esc(user.name || '—')}</td><td>${esc(user.email || '—')}</td><td><strong>${Number(user.rewardPoints || 0).toLocaleString()}</strong></td><td>${rewardHistoryHtml(history)}</td><td style="color:var(--muted)">${latest ? fmtDateTime(latest.createdAt) : '—'}</td></tr>`;
+    }).join('');
+    tbody.querySelectorAll('.reward-user-row').forEach(row => {
+      const openDetails = () => { window.location.href = 'reward-detail.html?id=' + encodeURIComponent(row.dataset.rewardUserId); };
+      row.addEventListener('click', openDetails);
+      row.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDetails(); }
+      });
+    });
+    const totalPages = Math.max(1, Math.ceil((json.total || 0) / (json.limit || 20)));
+    renderPagination('rewardsPagination', page, totalPages, loadRewards);
+  }
+
+  document.getElementById('rewardSaveBtn').addEventListener('click', saveRewardSettings);
 
   // ── Users ─────────────────────────────────────────────────────────────────────
   let userPage = 1;
@@ -1557,6 +1663,8 @@
     if (liveEventsEl) liveEventsEl.checked = json.liveEventsEnabled || false;
     const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
     if (selfieVerifEl) selfieVerifEl.checked = json.selfieVerificationEnabled || false;
+    const referAFriendEl = document.getElementById('appconfig-referAFriendEnabled');
+    if (referAFriendEl) referAFriendEl.checked = json.referAFriendEnabled || false;
     const showLastSearchedEl = document.getElementById('appconfig-showLastSearchedClubsForMale');
     if (showLastSearchedEl) showLastSearchedEl.checked = json.showLastSearchedClubsForMale || false;
     const showLastBookedEl = document.getElementById('appconfig-showLastBookedPlaces');
@@ -1638,12 +1746,14 @@
   async function saveAppConfigs() {
     const liveEventsEl = document.getElementById('events-liveEventsEnabled');
     const selfieVerifEl = document.getElementById('misc-selfieVerificationEnabled');
+    const referAFriendEl = document.getElementById('appconfig-referAFriendEnabled');
     const showLastSearchedEl = document.getElementById('appconfig-showLastSearchedClubsForMale');
     const showLastBookedEl = document.getElementById('appconfig-showLastBookedPlaces');
     const showTopVisitedEl = document.getElementById('appconfig-showTopVisitedPlacesNearby');
     const payload = {
       liveEventsEnabled: liveEventsEl ? liveEventsEl.checked : false,
       selfieVerificationEnabled: selfieVerifEl ? selfieVerifEl.checked : false,
+      referAFriendEnabled: referAFriendEl ? referAFriendEl.checked : false,
       showLastSearchedClubsForMale: showLastSearchedEl ? showLastSearchedEl.checked : false,
       showLastBookedPlaces: showLastBookedEl ? showLastBookedEl.checked : false,
       showTopVisitedPlacesNearby: showTopVisitedEl ? showTopVisitedEl.checked : false,
@@ -1682,6 +1792,202 @@
     toast('Events settings saved successfully');
   }
 
+  let _subscriptionSettingsLoaded = false;
+  let _subscriptionPackages = [];
+  const packageActionModal = document.getElementById('packageActionModal');
+  const packageActionCancel = document.getElementById('packageActionCancel');
+  const packageActionConfirm = document.getElementById('packageActionConfirm');
+  let packageActionResolve = null;
+
+  function confirmPackageAction(action, packageName) {
+    const isDelete = action === 'delete';
+    const packageActionTitle = document.getElementById('packageActionTitle');
+    packageActionTitle.textContent = `${action.charAt(0).toUpperCase()}${action.slice(1)} Package?`;
+    packageActionTitle.className = isDelete ? 'modal-title delete-title' : 'modal-title';
+    document.getElementById('packageActionMessage').textContent = isDelete
+      ? 'This package will be permanently removed. This action cannot be undone.'
+      : `The package will ${action === 'enable' ? 'become available' : 'no longer be available'} for purchase.`;
+    document.getElementById('packageActionName').textContent = packageName;
+    packageActionConfirm.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+    packageActionConfirm.classList.toggle('btn-danger', isDelete);
+    packageActionConfirm.classList.toggle('btn-primary', !isDelete);
+    packageActionModal.classList.remove('hidden');
+    return new Promise((resolve) => { packageActionResolve = resolve; });
+  }
+
+  function closePackageAction(confirmed) {
+    packageActionModal.classList.add('hidden');
+    if (packageActionResolve) packageActionResolve(confirmed);
+    packageActionResolve = null;
+  }
+
+  packageActionCancel.addEventListener('click', () => closePackageAction(false));
+  packageActionConfirm.addEventListener('click', () => closePackageAction(true));
+
+  function renderSubscriptionPackages() {
+    const container = document.getElementById('subscriptionPackages');
+    const empty = document.getElementById('subscriptionPackagesEmpty');
+    if (!container || !empty) return;
+    container.innerHTML = '';
+    empty.classList.toggle('hidden', _subscriptionPackages.length > 0);
+
+    _subscriptionPackages.forEach((pkg, index) => {
+      const row = document.createElement('div');
+      row.className = 'subscription-package-row';
+      row.style.cssText = 'display:grid; grid-template-columns:minmax(130px,1.1fr) 80px 95px 68px 88px minmax(150px,1.4fr) 96px 82px 76px; gap:10px; align-items:end; padding:12px 0; border-bottom:1px solid var(--border);';
+      const isDraft = Boolean(pkg._draft);
+      const fieldDisabled = isDraft ? '' : ' disabled';
+      const actionButton = isDraft
+        ? `<button class="btn-sm btn-primary" type="button" data-create-package="${index}">Create</button>`
+        : `<button class="btn-sm btn-primary" type="button" data-toggle-package="${index}">${pkg.enabled !== false ? 'Disable' : 'Enable'}</button>`;
+      row.innerHTML = `
+        <label class="subscription-package-field">Package Name<input class="text-input subscription-package-name" data-index="${index}" value="${pkg.name || ''}" placeholder="Starter Pack"${fieldDisabled} /></label>
+        <label class="subscription-package-field">Requests<input type="number" class="text-input subscription-package-requests" data-index="${index}" value="${pkg.requests || ''}" min="1" step="1" placeholder="20"${fieldDisabled} /></label>
+        <label class="subscription-package-field">Cost<input type="number" class="text-input subscription-package-cost" data-index="${index}" value="${pkg.cost ?? ''}" min="0" step="0.01" placeholder="100"${fieldDisabled} /></label>
+        <label class="subscription-package-field">Currency<input class="text-input subscription-package-currency" data-index="${index}" value="${pkg.currency || 'INR'}" maxlength="3" placeholder="INR"${fieldDisabled} /></label>
+        <label class="subscription-package-field">Expiry (days)<input type="number" class="text-input subscription-package-expiry" data-index="${index}" value="${pkg.expiryDays ?? 0}" min="0" step="1" placeholder="0"${fieldDisabled} /></label>
+        <label class="subscription-package-field">Description<input class="text-input subscription-package-description" data-index="${index}" value="${pkg.description || ''}" placeholder="Package description"${fieldDisabled} /></label>
+        <div class="subscription-package-field"><span>Status</span>${actionButton}</div>
+        <div class="subscription-package-field"><span>Action</span><button class="btn-sm btn-danger" type="button" data-delete-package="${index}">Delete</button></div>`;
+      container.appendChild(row);
+    });
+
+    container.querySelectorAll('[data-delete-package]').forEach((button) => {
+      button.addEventListener('click', () => deleteSubscriptionPackage(Number(button.dataset.deletePackage)));
+    });
+
+    container.querySelectorAll('[data-create-package]').forEach((button) => {
+      button.addEventListener('click', () => createSubscriptionPackage(Number(button.dataset.createPackage)));
+    });
+
+    container.querySelectorAll('[data-toggle-package]').forEach((button) => {
+      button.addEventListener('click', () => toggleSubscriptionPackage(Number(button.dataset.togglePackage)));
+    });
+  }
+
+  async function loadSubscriptionSettings() {
+    if (_subscriptionSettingsLoaded) return;
+    const json = await apiAbs(API_BASE + '/v1/admin/settings');
+    if (!json) { toast('Failed to load subscription settings'); return; }
+    const dailyLimitEl = document.getElementById('subscription-dailyRequestLimit');
+    if (dailyLimitEl) dailyLimitEl.value = json.dailyRequestLimit ?? 10;
+    _subscriptionPackages = Array.isArray(json.requestPackages) ? json.requestPackages.map(pkg => ({ ...pkg })) : [];
+    renderSubscriptionPackages();
+    _subscriptionSettingsLoaded = true;
+  }
+
+  function readSubscriptionPackage(index) {
+    return {
+      id: document.querySelector(`.subscription-package-id[data-index="${index}"]`)?.value.trim() || `package-${index + 1}`,
+      name: document.querySelector(`.subscription-package-name[data-index="${index}"]`)?.value.trim() || document.querySelector(`.subscription-package-id[data-index="${index}"]`)?.value.trim() || `package-${index + 1}`,
+      description: document.querySelector(`.subscription-package-description[data-index="${index}"]`)?.value.trim() || '',
+      requests: Number(document.querySelector(`.subscription-package-requests[data-index="${index}"]`)?.value || 0),
+      cost: Number(document.querySelector(`.subscription-package-cost[data-index="${index}"]`)?.value || 0),
+      currency: (document.querySelector(`.subscription-package-currency[data-index="${index}"]`)?.value || 'INR').trim().toUpperCase(),
+      expiryDays: Number(document.querySelector(`.subscription-package-expiry[data-index="${index}"]`)?.value || 0),
+      enabled: document.querySelector(`.subscription-package-enabled[data-index="${index}"]`)
+        ? Boolean(document.querySelector(`.subscription-package-enabled[data-index="${index}"]`).checked)
+        : _subscriptionPackages[index]?.enabled !== false,
+      _draft: Boolean(_subscriptionPackages[index]?._draft),
+    };
+  }
+
+  function readSubscriptionPackages() {
+    return _subscriptionPackages.map((pkg, index) => readSubscriptionPackage(index));
+  }
+
+  function persistedSubscriptionPackages(packages) {
+    return packages.map(({ _draft, ...pkg }) => pkg);
+  }
+
+  function isValidSubscriptionPackage(pkg) {
+    return Boolean(pkg.name) && Number.isInteger(pkg.requests) && pkg.requests > 0 && pkg.cost >= 0 &&
+      Number.isInteger(pkg.expiryDays) && pkg.expiryDays >= 0 && Boolean(pkg.currency);
+  }
+
+  async function createSubscriptionPackage(index) {
+    const packageToSave = readSubscriptionPackage(index);
+    if (!isValidSubscriptionPackage(packageToSave)) {
+      toast('Enter valid values for this package before creating it');
+      return;
+    }
+    const requestPackages = persistedSubscriptionPackages(readSubscriptionPackages().filter(pkg => !pkg._draft));
+    requestPackages.push(persistedSubscriptionPackages([packageToSave])[0]);
+    if (requestPackages.some(pkg => !isValidSubscriptionPackage(pkg))) {
+      toast('Complete the package details before creating it');
+      return;
+    }
+    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ requestPackages }),
+    });
+    if (!result) { toast('Failed to create package'); return; }
+    _subscriptionPackages = Array.isArray(result.requestPackages) ? result.requestPackages : requestPackages;
+    _subscriptionSettingsLoaded = true;
+    renderSubscriptionPackages();
+    toast(`${packageToSave.name} created successfully`);
+  }
+
+  async function toggleSubscriptionPackage(index) {
+    const requestPackages = readSubscriptionPackages();
+    if (!requestPackages[index]) return;
+    const packageName = requestPackages[index].name || 'this package';
+    const nextEnabled = !requestPackages[index].enabled;
+    const action = nextEnabled ? 'enable' : 'disable';
+    if (!await confirmPackageAction(action, packageName)) return;
+    requestPackages[index].enabled = nextEnabled;
+    const persistedPackages = persistedSubscriptionPackages(requestPackages);
+    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ requestPackages: persistedPackages }),
+    });
+    if (!result) { toast('Failed to update package status'); return; }
+    _subscriptionPackages = Array.isArray(result.requestPackages) ? result.requestPackages : persistedPackages;
+    _subscriptionSettingsLoaded = true;
+    renderSubscriptionPackages();
+    toast(`${_subscriptionPackages[index]?.enabled ? 'Package enabled' : 'Package disabled'}`);
+  }
+
+  async function deleteSubscriptionPackage(index) {
+    const packageToDelete = _subscriptionPackages[index];
+    if (!packageToDelete || !await confirmPackageAction('delete', packageToDelete.name || 'this package')) return;
+
+    if (packageToDelete._draft) {
+      _subscriptionPackages.splice(index, 1);
+      renderSubscriptionPackages();
+      return;
+    }
+    const requestPackages = persistedSubscriptionPackages(readSubscriptionPackages());
+    requestPackages.splice(index, 1);
+    if (requestPackages.some(pkg => !isValidSubscriptionPackage(pkg))) {
+      toast('Complete the other package rows before deleting this package');
+      return;
+    }
+    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ requestPackages }),
+    });
+    if (!result) { toast('Failed to delete package'); return; }
+    _subscriptionPackages = Array.isArray(result.requestPackages) ? result.requestPackages : requestPackages;
+    _subscriptionSettingsLoaded = true;
+    renderSubscriptionPackages();
+    toast('Package deleted successfully');
+  }
+
+  async function saveDailyRequestLimit() {
+    const dailyRequestLimit = Number(document.getElementById('subscription-dailyRequestLimit')?.value || 0);
+    if (!Number.isInteger(dailyRequestLimit) || dailyRequestLimit < 1) {
+      toast('Enter a valid daily request allowance');
+      return;
+    }
+    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ dailyRequestLimit }),
+    });
+    if (!result) { toast('Failed to save daily allowance'); return; }
+    toast('Daily request allowance saved successfully');
+  }
+
   // ── Boot ────────────────────────────────────────────────────────────────────
   // Honour URL hash so back-links from other pages can land on a specific section.
   const _bootSection = window.location.hash.replace('#', '');
@@ -1690,17 +1996,25 @@
   const appVersionBtn = document.getElementById('appVersionSaveBtn');
   const paymentBtn = document.getElementById('paymentSaveBtn');
   const appConfigsBtn = document.getElementById('appConfigsSaveBtn');
-  const appConfigsBtn = document.getElementById('appConfigsSaveBtn');
   const miscBtn = document.getElementById('miscSaveBtn');
   const eventsBtn = document.getElementById('eventsSaveBtn');
+  const subscriptionAddBtn = document.getElementById('subscriptionAddPackageBtn');
+  const subscriptionDailyLimitSaveBtn = document.getElementById('subscriptionDailyLimitSaveBtn');
   
-  if (appVersionBtn)  appVersionBtn.addEventListener('click', saveAppVersion);
   if (appVersionBtn)  appVersionBtn.addEventListener('click', saveAppVersion);
   if (paymentBtn)     paymentBtn.addEventListener('click', savePayment);
   if (appConfigsBtn)  appConfigsBtn.addEventListener('click', saveAppConfigs);
-  if (appConfigsBtn)  appConfigsBtn.addEventListener('click', saveAppConfigs);
   if (miscBtn)        miscBtn.addEventListener('click', saveMisc);
   if (eventsBtn)      eventsBtn.addEventListener('click', saveEventsSettings);
+  if (subscriptionAddBtn) subscriptionAddBtn.addEventListener('click', () => {
+    if (_subscriptionPackages.some(pkg => pkg._draft)) {
+      toast('Create or delete the current draft package first');
+      return;
+    }
+    _subscriptionPackages.push({ id: '', name: '', description: '', requests: 20, cost: 100, currency: 'INR', expiryDays: 0, enabled: true, _draft: true });
+    renderSubscriptionPackages();
+  });
+  if (subscriptionDailyLimitSaveBtn) subscriptionDailyLimitSaveBtn.addEventListener('click', saveDailyRequestLimit);
 
   // ── Initialize Events List ──────────────────────────────────────────────────
   // Load events when the Events section is activated

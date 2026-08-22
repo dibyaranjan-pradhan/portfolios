@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reward Details - STAG Admin</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body class="dash-body reward-detail-body">
+  <main class="reward-detail-container">
+    <header class="reward-detail-header">
+      <a class="btn-ghost" href="dashboard.html#rewards">Back to Rewards</a>
+      <div>
+        <p class="eyebrow">Rewards</p>
+        <h1 class="page-title">Reward Details</h1>
+      </div>
+    </header>
+
+    <div id="rewardError" class="table-empty hidden"><p>Unable to load reward details.</p></div>
+    <div id="rewardContent" class="hidden">
+      <section class="reward-user-summary">
+        <div>
+          <p class="eyebrow">User</p>
+          <h2 id="rewardUserName">-</h2>
+          <p id="rewardUserEmail" class="reward-detail-muted">-</p>
+        </div>
+        <div class="reward-total">
+          <span class="eyebrow">Current points</span>
+          <strong id="rewardUserPoints">0</strong>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-intro">
+          <h2 class="section-title">Reward Activity</h2>
+          <p class="section-desc">See how this user earned points, who they met, and which referral relationship generated each reward.</p>
+        </div>
+        <div id="rewardTransactions" class="reward-transaction-list"></div>
+        <div id="rewardEmpty" class="table-empty hidden"><p>No reward transactions found.</p></div>
+      </section>
+    </div>
+  </main>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/reward-detail.js"></script>
+</body>
+</html>

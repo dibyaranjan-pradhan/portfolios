@@ -1,0 +1,343 @@
+/**
+ * STAG Admin — Subscription Management
+ */
+(function () {
+  'use strict';
+
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  const adminInfo = JSON.parse(localStorage.getItem(ADMIN_INFO_KEY) || '{}');
+  const roleLabel = adminInfo.role || 'admin';
+  const nameLabel = adminInfo.username || adminInfo.email || 'Admin';
+  const avatarChar = nameLabel.charAt(0).toUpperCase();
+  const profileAvatar = document.getElementById('profileAvatar');
+  const profileName = document.getElementById('profileName');
+  const profileRole = document.getElementById('profileRole');
+  if (profileAvatar) profileAvatar.textContent = avatarChar;
+  if (profileName) profileName.textContent = nameLabel;
+  if (profileRole) profileRole.textContent = roleLabel;
+  const headerAvatar = document.getElementById('headerAvatar');
+  const headerAdminName = document.getElementById('headerAdminName');
+  const adminBadge = document.getElementById('adminBadge');
+  if (headerAvatar) headerAvatar.textContent = avatarChar;
+  if (headerAdminName) headerAdminName.textContent = nameLabel;
+  if (adminBadge) adminBadge.textContent = roleLabel;
+
+  async function apiAbs(url, opts = {}) {
+    const res = await fetch(url, {
+      ...opts,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+        ...(opts.headers || {}),
+      },
+    });
+    if (res.status === 401) {
+      localStorage.clear();
+      window.location.href = 'index.html';
+      return { ok: false, data: null };
+    }
+    const data = await res.json().catch(() => null);
+    return { ok: res.ok, data };
+  }
+
+  const toastEl = document.getElementById('toast');
+  let toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 3000);
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  const neverExpiresEl = document.getElementById('planNeverExpires');
+  const expiryDaysEl = document.getElementById('planExpiryDays');
+  const tableEl = document.getElementById('plansTable');
+  const bodyEl = document.getElementById('plansBody');
+  const emptyEl = document.getElementById('plansEmpty');
+  const loaderEl = document.getElementById('plansLoader');
+  const createPanel = document.getElementById('planCreatePanel');
+  const createOpenBtn = document.getElementById('planCreateOpenBtn');
+  let plans = [];
+  let sortKey = '';
+  let sortDir = 'asc';
+
+  function comparePlans(a, b) {
+    const av = a[sortKey];
+    const bv = b[sortKey];
+    let cmp = 0;
+    if (sortKey === 'name' || sortKey === 'status') {
+      cmp = String(av || '').localeCompare(String(bv || ''), undefined, { sensitivity: 'base' });
+    } else {
+      cmp = Number(av) - Number(bv);
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
+  }
+
+  function applySort() {
+    if (!sortKey) return;
+    plans.sort(comparePlans);
+  }
+
+  function syncSortHeaders() {
+    document.querySelectorAll('#plansTable th[data-sort]').forEach(function (th) {
+      const on = th.getAttribute('data-sort') === sortKey;
+      th.classList.toggle('is-sorted', on);
+      th.setAttribute('aria-sort', on ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none');
+    });
+  }
+
+  function setNeverExpires(never) {
+    neverExpiresEl.checked = never;
+    document.querySelectorAll('.plan-expiry-pair').forEach(function (pair) {
+      pair.classList.toggle('is-on', (pair.getAttribute('data-never') === 'true') === never);
+    });
+    expiryDaysEl.disabled = never;
+  }
+
+  function setCreatePanelOpen(open) {
+    createPanel.hidden = !open;
+    createOpenBtn.textContent = open ? 'Cancel' : 'Create plan';
+    if (open) document.getElementById('planName').focus();
+  }
+
+  function showLoader(on) {
+    loaderEl.hidden = !on;
+    if (on) {
+      tableEl.hidden = true;
+      emptyEl.hidden = true;
+    }
+  }
+
+  function upsertPlan(plan) {
+    const idx = plans.findIndex(function (p) { return p.id === plan.id; });
+    if (idx === -1) {
+      plans.unshift(plan);
+      return;
+    }
+    plans[idx] = Object.assign({}, plans[idx], plan);
+  }
+
+  function rowHtml(plan) {
+    const expiry = plan.neverExpires ? 'Never' : (String(plan.expiryDays) + ' days');
+    const deleted = plan.status === 'deleted';
+    const active = plan.status === 'active';
+    const rowClass = deleted ? 'plan-row--deleted' : (active ? '' : 'plan-row--inactive');
+    const toggle = deleted
+      ? ''
+      : '<label class="toggle-switch toggle-switch--sm" title="' + (active ? 'Deactivate' : 'Activate') + '">' +
+          '<input type="checkbox" data-toggle="' + esc(plan.id) + '"' + (active ? ' checked' : '') + '>' +
+          '<span class="toggle-track"></span>' +
+        '</label>';
+    const deleteBtn = deleted
+      ? ''
+      : '<button class="btn-sm btn-danger" type="button" data-delete="' + esc(plan.id) + '"' +
+          (active ? ' disabled title="Deactivate the plan before deleting"' : ' title="Delete plan"') +
+        '>Delete</button>';
+    return '<tr class="' + rowClass + '" data-plan-id="' + esc(plan.id) + '">' +
+      '<td>' + esc(plan.name) + '</td>' +
+      '<td>' + esc(plan.creditCount) + '</td>' +
+      '<td>' + esc(plan.cost) + '</td>' +
+      '<td>' + esc(plan.currency) + '</td>' +
+      '<td>' + esc(expiry) + '</td>' +
+      '<td class="plan-keep">' +
+        '<div class="plan-status-cell">' +
+          '<span class="plan-status is-' + esc(plan.status) + '">' + esc(plan.status) + '</span>' +
+          toggle +
+        '</div>' +
+      '</td>' +
+      '<td class="plan-keep">' + deleteBtn + '</td>' +
+    '</tr>';
+  }
+
+  function renderPlans() {
+    showLoader(false);
+    if (!plans.length) {
+      bodyEl.innerHTML = '';
+      tableEl.hidden = true;
+      emptyEl.hidden = false;
+      return;
+    }
+    applySort();
+    bodyEl.innerHTML = plans.map(rowHtml).join('');
+    tableEl.hidden = false;
+    emptyEl.hidden = true;
+    syncSortHeaders();
+  }
+
+  function resetForm() {
+    document.getElementById('planName').value = '';
+    document.getElementById('planDescription').value = '';
+    document.getElementById('planCreditCount').value = '';
+    document.getElementById('planCost').value = '';
+    document.getElementById('planCurrency').value = 'INR';
+    expiryDaysEl.value = '';
+    setNeverExpires(false);
+  }
+
+  async function loadPlans() {
+    showLoader(true);
+    const result = await apiAbs(API_BASE + '/v1/subscription/plans?page=1&limit=50');
+    if (!result.ok) {
+      toast((result.data && result.data.message) || 'Failed to load plans');
+      plans = [];
+      renderPlans();
+      return;
+    }
+    plans = (result.data && (result.data.items || result.data.Items)) || [];
+    renderPlans();
+  }
+
+  document.querySelector('.plan-expiry-row').addEventListener('click', function (ev) {
+    const pair = ev.target.closest('.plan-expiry-pair');
+    if (!pair) return;
+    setNeverExpires(pair.getAttribute('data-never') === 'true');
+  });
+  setNeverExpires(false);
+  setCreatePanelOpen(false);
+
+  createOpenBtn.addEventListener('click', function () {
+    if (createPanel.hidden) {
+      setCreatePanelOpen(true);
+      return;
+    }
+    resetForm();
+    setCreatePanelOpen(false);
+  });
+
+  document.getElementById('planCreateBtn').addEventListener('click', async function () {
+    const name = document.getElementById('planName').value.trim();
+    const description = document.getElementById('planDescription').value.trim();
+    const creditCount = parseInt(document.getElementById('planCreditCount').value, 10);
+    const cost = parseFloat(document.getElementById('planCost').value);
+    const currency = document.getElementById('planCurrency').value || 'INR';
+    const neverExpires = neverExpiresEl.checked;
+    const expiryDays = parseInt(document.getElementById('planExpiryDays').value, 10);
+
+    if (!name) {
+      toast('Name is required');
+      return;
+    }
+    if (!(creditCount >= 1)) {
+      toast('Credit count must be at least 1');
+      return;
+    }
+    if (!(cost >= 0)) {
+      toast('Cost must be 0 or greater');
+      return;
+    }
+    if (!neverExpires && (!Number.isInteger(expiryDays) || expiryDays < 1)) {
+      toast('Expiry period (days) must be at least 1');
+      return;
+    }
+
+    const body = {
+      name: name,
+      description: description,
+      creditCount: creditCount,
+      cost: cost,
+      currency: currency,
+      neverExpires: neverExpires,
+      expiryDays: neverExpires ? 1 : expiryDays,
+    };
+    const result = await apiAbs(API_BASE + '/v1/subscription/plans', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    if (!result.ok) {
+      toast((result.data && result.data.message) || 'Create failed');
+      return;
+    }
+    toast('Plan created');
+    resetForm();
+    setCreatePanelOpen(false);
+    if (result.data && result.data.id) {
+      upsertPlan(result.data);
+      renderPlans();
+    }
+  });
+
+  tableEl.addEventListener('click', function (ev) {
+    const th = ev.target.closest('th[data-sort]');
+    if (!th || !tableEl.contains(th)) return;
+    const key = th.getAttribute('data-sort');
+    if (sortKey === key) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortDir = 'asc';
+    }
+    renderPlans();
+  });
+
+  tableEl.addEventListener('change', async function (ev) {
+    const toggleInput = ev.target.closest('[data-toggle]');
+    if (!toggleInput) return;
+    const id = toggleInput.getAttribute('data-toggle');
+    toggleInput.disabled = true;
+    const result = await apiAbs(API_BASE + '/v1/subscription/plans/' + encodeURIComponent(id) + '/toggle', {
+      method: 'POST',
+      body: '',
+    });
+    if (!result.ok) {
+      toast((result.data && result.data.message) || 'Toggle failed');
+      toggleInput.checked = !toggleInput.checked;
+      toggleInput.disabled = false;
+      return;
+    }
+    upsertPlan(result.data);
+    renderPlans();
+  });
+
+  tableEl.addEventListener('click', async function (ev) {
+    const deleteBtn = ev.target.closest('[data-delete]');
+    if (!deleteBtn || deleteBtn.disabled) return;
+    if (!confirm('Delete this plan from the shop? Purchases already bought keep their credits.')) {
+      return;
+    }
+    const id = deleteBtn.getAttribute('data-delete');
+    deleteBtn.disabled = true;
+    const result = await apiAbs(API_BASE + '/v1/subscription/plans/' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!result.ok) {
+      toast((result.data && result.data.message) || 'Delete failed');
+      deleteBtn.disabled = false;
+      return;
+    }
+    const existing = plans.find(function (p) { return p.id === id; });
+    if (existing) existing.status = 'deleted';
+    renderPlans();
+  });
+
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+      localStorage.clear();
+      window.location.href = 'index.html';
+    });
+  }
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (sidebarToggle && sidebar && overlay) {
+    sidebarToggle.addEventListener('click', function () {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('visible');
+    });
+    overlay.addEventListener('click', function () {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('visible');
+    });
+  }
+
+  loadPlans();
+})();

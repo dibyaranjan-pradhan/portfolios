@@ -1890,6 +1890,9 @@ a.req-user-name:hover { color: var(--red); }
   margin-bottom: 20px;
 }
 .misc-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text);
@@ -1897,6 +1900,33 @@ a.req-user-name:hover { color: var(--red); }
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
 }
+.misc-group-min {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+}
+.misc-group-min svg { width: 16px; height: 16px; transition: transform 0.18s ease; }
+.misc-group-min:hover { color: var(--white); background: transparent; }
+.misc-group.is-collapsed {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.misc-group.is-collapsed .misc-group-title {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.misc-group.is-collapsed .misc-group-body { display: none; }
+.misc-group.is-collapsed .misc-group-min svg { transform: rotate(-90deg); }
 @media (max-width: 1100px) {
   .subscription-package-row {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -2262,5 +2292,220 @@ a.req-user-name:hover { color: var(--red); }
   background: rgba(255,152,0,0.06);
   border-left: 3px solid #ff9800;
   border-radius: 0 6px 6px 0;
+}
+
+/* ── Subscription plans ─────────────────────────────────────── */
+.plan-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.plan-toolbar-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--white);
+}
+.plan-create[hidden],
+#plansTable[hidden],
+#plansEmpty[hidden],
+#plansLoader[hidden] { display: none !important; }
+.plan-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 72px 24px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+.plan-loader-ring {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255,255,255,0.12);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.plan-create {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.plan-create-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: start;
+}
+.plan-create-half { grid-column: span 2; }
+.plan-create .form-group { gap: 6px; }
+.plan-create .form-group label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1;
+  min-height: 12px;
+}
+.plan-create .form-group input,
+.plan-create .form-group select {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  height: 38px;
+  box-sizing: border-box;
+}
+.plan-expiry-row {
+  display: grid;
+  grid-template-columns: 1fr 14px 1fr;
+  gap: 6px;
+  align-items: center;
+  height: 38px;
+}
+.plan-expiry-hinge {
+  width: 8px;
+  height: 8px;
+  justify-self: center;
+  background: var(--border-mid);
+  transform: rotate(45deg);
+  border-radius: 1px;
+}
+.plan-expiry-row:has(.plan-expiry-pair.is-on) .plan-expiry-hinge {
+  background: var(--red);
+}
+.plan-expiry-pair {
+  display: flex;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+}
+.plan-expiry-pair.is-on { border-color: var(--red); }
+.plan-expiry-pair button {
+  flex: 1;
+  border: 0;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.plan-expiry-pair.is-on button {
+  background: var(--red);
+  color: #fff;
+  font-weight: 600;
+  border-right-color: rgba(255,255,255,0.18);
+}
+.plan-expiry-mate {
+  flex: 0 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--muted);
+}
+.plan-expiry-pair.is-on .plan-expiry-mate { color: #fff; }
+.plan-create .plan-expiry-pair input {
+  flex: 0 0 46%;
+  min-width: 0;
+  height: 38px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.plan-expiry-pair:not(.is-on) input,
+.plan-expiry-pair:not(.is-on) .plan-expiry-mate {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.plan-create-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.plan-skel-wide { width: 140px; }
+.plan-skel-status { width: 88px; }
+#plansTable td {
+  padding: 10px 16px;
+  line-height: 1.2;
+}
+#plansTable th.is-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+#plansTable th.is-sortable::after {
+  content: '↕';
+  margin-left: 6px;
+  font-size: 0.65rem;
+  opacity: 0.35;
+}
+#plansTable th.is-sorted[aria-sort="ascending"]::after {
+  content: '↑';
+  opacity: 0.85;
+  color: var(--white);
+}
+#plansTable th.is-sorted[aria-sort="descending"]::after {
+  content: '↓';
+  opacity: 0.85;
+  color: var(--white);
+}
+#plansTable .btn-sm {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+.plan-status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  line-height: 1;
+  vertical-align: middle;
+}
+.plan-status {
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  line-height: 1;
+}
+.toggle-switch--sm {
+  width: 32px;
+  height: 18px;
+}
+.toggle-switch--sm .toggle-track { border-radius: 18px; }
+.toggle-switch--sm .toggle-track::after {
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+}
+.toggle-switch--sm input:checked + .toggle-track::after {
+  transform: translateX(14px);
+}
+.plan-status.is-active { color: #50c878; }
+.plan-status.is-inactive,
+.plan-status.is-deleted { color: var(--muted); }
+.plan-row--inactive td:not(.plan-keep) {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+.plan-row--inactive .plan-status { color: var(--muted); }
+.plan-row--deleted td {
+  filter: grayscale(1);
+  opacity: 0.42;
+}
+.data-table tbody tr.plan-row--inactive:hover,
+.data-table tbody tr.plan-row--deleted:hover {
+  background: transparent;
+}
+@media (max-width: 900px) {
+  .plan-create-grid { grid-template-columns: 1fr 1fr; }
 }
 

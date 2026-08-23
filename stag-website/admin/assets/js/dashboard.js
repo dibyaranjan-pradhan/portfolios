@@ -175,13 +175,15 @@
   }
 
   // ── Navigation ───────────────────────────────────────────────────────────────
-  const sections = ['overview', 'users', 'requests', 'rewards', 'reports', 'support', 'events', 'salesLeads', 'salesLeadDetail', 'cockpit', 'subscription'];
+  const sections = ['overview', 'users', 'requests', 'rewards', 'reports', 'support', 'events', 'salesLeads', 'salesLeadDetail', 'cockpit'];
   const sectionTitles = {
     overview: 'Overview', users: 'Users', requests: 'Club Requests', rewards: 'Rewards',
-    reports: 'Reports', support: 'Support Tickets', events: 'Events Management', salesLeads: 'Sales Leads', salesLeadDetail: 'Sales Lead Details', cockpit: 'Cockpit', subscription: 'Subscription Management',
+    reports: 'Reports', support: 'Support Tickets', events: 'Events Management', salesLeads: 'Sales Leads', salesLeadDetail: 'Sales Lead Details', cockpit: 'Cockpit',
   };
 
-  function activateSection(name) {
+  const navHashes = ['overview', 'users', 'requests', 'rewards', 'events', 'salesLeads', 'reports', 'support', 'cockpit'];
+
+  function activateSection(name, skipHash) {
     console.log('[STAG Admin] Navigating to section:', name, '—', sectionTitles[name] || name);
     sections.forEach(s => {
       document.getElementById('section-' + s).classList.toggle('hidden', s !== name);
@@ -200,14 +202,24 @@
     if (name === 'events')    loadEvents();
     if (name === 'salesLeads') loadSalesLeads(1);
     if (name === 'cockpit')   loadCockpit();
-    if (name === 'subscription') loadSubscriptionSettings();
 
-    // close sidebar on mobile
     document.getElementById('sidebar').classList.remove('open');
+    if (!skipHash && navHashes.includes(name) && location.hash !== '#' + name) {
+      history.pushState({ section: name }, '', '#' + name);
+    }
   }
 
   document.querySelectorAll('.nav-item').forEach(el => {
-    el.addEventListener('click', e => { e.preventDefault(); activateSection(el.dataset.section); });
+    el.addEventListener('click', e => {
+      if (!el.dataset.section) return;
+      e.preventDefault();
+      activateSection(el.dataset.section);
+    });
+  });
+
+  window.addEventListener('popstate', () => {
+    const raw = location.hash.replace('#', '');
+    activateSection(navHashes.includes(raw) ? raw : 'overview', true);
   });
 
   document.querySelectorAll('.reward-tab').forEach(tab => {
@@ -1678,6 +1690,38 @@
     setupCockpitTabs();
   }
 
+  function initCockpitCollapsibles() {
+    const chevron = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>';
+    document.querySelectorAll('#section-cockpit .misc-group').forEach(group => {
+      if (group.dataset.collapseReady) return;
+      const title = group.querySelector('.misc-group-title');
+      if (!title) return;
+      group.dataset.collapseReady = '1';
+      const body = document.createElement('div');
+      body.className = 'misc-group-body';
+      let node = title.nextSibling;
+      while (node) {
+        const next = node.nextSibling;
+        body.appendChild(node);
+        node = next;
+      }
+      group.appendChild(body);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'misc-group-min';
+      btn.setAttribute('aria-label', 'Minimize section');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.innerHTML = chevron;
+      title.appendChild(btn);
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const collapsed = group.classList.toggle('is-collapsed');
+        btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        btn.setAttribute('aria-label', collapsed ? 'Expand section' : 'Minimize section');
+      });
+    });
+  }
+
   function setupCockpitTabs() {
     const tabButtons = document.querySelectorAll('.cockpit-tab');
     const tabContents = document.querySelectorAll('.cockpit-tab-content');
@@ -1792,229 +1836,27 @@
     toast('Events settings saved successfully');
   }
 
-  let _subscriptionSettingsLoaded = false;
-  let _subscriptionPackages = [];
-  const packageActionModal = document.getElementById('packageActionModal');
-  const packageActionCancel = document.getElementById('packageActionCancel');
-  const packageActionConfirm = document.getElementById('packageActionConfirm');
-  let packageActionResolve = null;
-
-  function confirmPackageAction(action, packageName) {
-    const isDelete = action === 'delete';
-    const packageActionTitle = document.getElementById('packageActionTitle');
-    packageActionTitle.textContent = `${action.charAt(0).toUpperCase()}${action.slice(1)} Package?`;
-    packageActionTitle.className = isDelete ? 'modal-title delete-title' : 'modal-title';
-    document.getElementById('packageActionMessage').textContent = isDelete
-      ? 'This package will be permanently removed. This action cannot be undone.'
-      : `The package will ${action === 'enable' ? 'become available' : 'no longer be available'} for purchase.`;
-    document.getElementById('packageActionName').textContent = packageName;
-    packageActionConfirm.textContent = action.charAt(0).toUpperCase() + action.slice(1);
-    packageActionConfirm.classList.toggle('btn-danger', isDelete);
-    packageActionConfirm.classList.toggle('btn-primary', !isDelete);
-    packageActionModal.classList.remove('hidden');
-    return new Promise((resolve) => { packageActionResolve = resolve; });
-  }
-
-  function closePackageAction(confirmed) {
-    packageActionModal.classList.add('hidden');
-    if (packageActionResolve) packageActionResolve(confirmed);
-    packageActionResolve = null;
-  }
-
-  packageActionCancel.addEventListener('click', () => closePackageAction(false));
-  packageActionConfirm.addEventListener('click', () => closePackageAction(true));
-
-  function renderSubscriptionPackages() {
-    const container = document.getElementById('subscriptionPackages');
-    const empty = document.getElementById('subscriptionPackagesEmpty');
-    if (!container || !empty) return;
-    container.innerHTML = '';
-    empty.classList.toggle('hidden', _subscriptionPackages.length > 0);
-
-    _subscriptionPackages.forEach((pkg, index) => {
-      const row = document.createElement('div');
-      row.className = 'subscription-package-row';
-      row.style.cssText = 'display:grid; grid-template-columns:minmax(130px,1.1fr) 80px 95px 68px 88px minmax(150px,1.4fr) 96px 82px 76px; gap:10px; align-items:end; padding:12px 0; border-bottom:1px solid var(--border);';
-      const isDraft = Boolean(pkg._draft);
-      const fieldDisabled = isDraft ? '' : ' disabled';
-      const actionButton = isDraft
-        ? `<button class="btn-sm btn-primary" type="button" data-create-package="${index}">Create</button>`
-        : `<button class="btn-sm btn-primary" type="button" data-toggle-package="${index}">${pkg.enabled !== false ? 'Disable' : 'Enable'}</button>`;
-      row.innerHTML = `
-        <label class="subscription-package-field">Package Name<input class="text-input subscription-package-name" data-index="${index}" value="${pkg.name || ''}" placeholder="Starter Pack"${fieldDisabled} /></label>
-        <label class="subscription-package-field">Requests<input type="number" class="text-input subscription-package-requests" data-index="${index}" value="${pkg.requests || ''}" min="1" step="1" placeholder="20"${fieldDisabled} /></label>
-        <label class="subscription-package-field">Cost<input type="number" class="text-input subscription-package-cost" data-index="${index}" value="${pkg.cost ?? ''}" min="0" step="0.01" placeholder="100"${fieldDisabled} /></label>
-        <label class="subscription-package-field">Currency<input class="text-input subscription-package-currency" data-index="${index}" value="${pkg.currency || 'INR'}" maxlength="3" placeholder="INR"${fieldDisabled} /></label>
-        <label class="subscription-package-field">Expiry (days)<input type="number" class="text-input subscription-package-expiry" data-index="${index}" value="${pkg.expiryDays ?? 0}" min="0" step="1" placeholder="0"${fieldDisabled} /></label>
-        <label class="subscription-package-field">Description<input class="text-input subscription-package-description" data-index="${index}" value="${pkg.description || ''}" placeholder="Package description"${fieldDisabled} /></label>
-        <div class="subscription-package-field"><span>Status</span>${actionButton}</div>
-        <div class="subscription-package-field"><span>Action</span><button class="btn-sm btn-danger" type="button" data-delete-package="${index}">Delete</button></div>`;
-      container.appendChild(row);
-    });
-
-    container.querySelectorAll('[data-delete-package]').forEach((button) => {
-      button.addEventListener('click', () => deleteSubscriptionPackage(Number(button.dataset.deletePackage)));
-    });
-
-    container.querySelectorAll('[data-create-package]').forEach((button) => {
-      button.addEventListener('click', () => createSubscriptionPackage(Number(button.dataset.createPackage)));
-    });
-
-    container.querySelectorAll('[data-toggle-package]').forEach((button) => {
-      button.addEventListener('click', () => toggleSubscriptionPackage(Number(button.dataset.togglePackage)));
-    });
-  }
-
-  async function loadSubscriptionSettings() {
-    if (_subscriptionSettingsLoaded) return;
-    const json = await apiAbs(API_BASE + '/v1/admin/settings');
-    if (!json) { toast('Failed to load subscription settings'); return; }
-    const dailyLimitEl = document.getElementById('subscription-dailyRequestLimit');
-    if (dailyLimitEl) dailyLimitEl.value = json.dailyRequestLimit ?? 10;
-    _subscriptionPackages = Array.isArray(json.requestPackages) ? json.requestPackages.map(pkg => ({ ...pkg })) : [];
-    renderSubscriptionPackages();
-    _subscriptionSettingsLoaded = true;
-  }
-
-  function readSubscriptionPackage(index) {
-    return {
-      id: document.querySelector(`.subscription-package-id[data-index="${index}"]`)?.value.trim() || `package-${index + 1}`,
-      name: document.querySelector(`.subscription-package-name[data-index="${index}"]`)?.value.trim() || document.querySelector(`.subscription-package-id[data-index="${index}"]`)?.value.trim() || `package-${index + 1}`,
-      description: document.querySelector(`.subscription-package-description[data-index="${index}"]`)?.value.trim() || '',
-      requests: Number(document.querySelector(`.subscription-package-requests[data-index="${index}"]`)?.value || 0),
-      cost: Number(document.querySelector(`.subscription-package-cost[data-index="${index}"]`)?.value || 0),
-      currency: (document.querySelector(`.subscription-package-currency[data-index="${index}"]`)?.value || 'INR').trim().toUpperCase(),
-      expiryDays: Number(document.querySelector(`.subscription-package-expiry[data-index="${index}"]`)?.value || 0),
-      enabled: document.querySelector(`.subscription-package-enabled[data-index="${index}"]`)
-        ? Boolean(document.querySelector(`.subscription-package-enabled[data-index="${index}"]`).checked)
-        : _subscriptionPackages[index]?.enabled !== false,
-      _draft: Boolean(_subscriptionPackages[index]?._draft),
-    };
-  }
-
-  function readSubscriptionPackages() {
-    return _subscriptionPackages.map((pkg, index) => readSubscriptionPackage(index));
-  }
-
-  function persistedSubscriptionPackages(packages) {
-    return packages.map(({ _draft, ...pkg }) => pkg);
-  }
-
-  function isValidSubscriptionPackage(pkg) {
-    return Boolean(pkg.name) && Number.isInteger(pkg.requests) && pkg.requests > 0 && pkg.cost >= 0 &&
-      Number.isInteger(pkg.expiryDays) && pkg.expiryDays >= 0 && Boolean(pkg.currency);
-  }
-
-  async function createSubscriptionPackage(index) {
-    const packageToSave = readSubscriptionPackage(index);
-    if (!isValidSubscriptionPackage(packageToSave)) {
-      toast('Enter valid values for this package before creating it');
-      return;
-    }
-    const requestPackages = persistedSubscriptionPackages(readSubscriptionPackages().filter(pkg => !pkg._draft));
-    requestPackages.push(persistedSubscriptionPackages([packageToSave])[0]);
-    if (requestPackages.some(pkg => !isValidSubscriptionPackage(pkg))) {
-      toast('Complete the package details before creating it');
-      return;
-    }
-    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
-      method: 'PATCH',
-      body: JSON.stringify({ requestPackages }),
-    });
-    if (!result) { toast('Failed to create package'); return; }
-    _subscriptionPackages = Array.isArray(result.requestPackages) ? result.requestPackages : requestPackages;
-    _subscriptionSettingsLoaded = true;
-    renderSubscriptionPackages();
-    toast(`${packageToSave.name} created successfully`);
-  }
-
-  async function toggleSubscriptionPackage(index) {
-    const requestPackages = readSubscriptionPackages();
-    if (!requestPackages[index]) return;
-    const packageName = requestPackages[index].name || 'this package';
-    const nextEnabled = !requestPackages[index].enabled;
-    const action = nextEnabled ? 'enable' : 'disable';
-    if (!await confirmPackageAction(action, packageName)) return;
-    requestPackages[index].enabled = nextEnabled;
-    const persistedPackages = persistedSubscriptionPackages(requestPackages);
-    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
-      method: 'PATCH',
-      body: JSON.stringify({ requestPackages: persistedPackages }),
-    });
-    if (!result) { toast('Failed to update package status'); return; }
-    _subscriptionPackages = Array.isArray(result.requestPackages) ? result.requestPackages : persistedPackages;
-    _subscriptionSettingsLoaded = true;
-    renderSubscriptionPackages();
-    toast(`${_subscriptionPackages[index]?.enabled ? 'Package enabled' : 'Package disabled'}`);
-  }
-
-  async function deleteSubscriptionPackage(index) {
-    const packageToDelete = _subscriptionPackages[index];
-    if (!packageToDelete || !await confirmPackageAction('delete', packageToDelete.name || 'this package')) return;
-
-    if (packageToDelete._draft) {
-      _subscriptionPackages.splice(index, 1);
-      renderSubscriptionPackages();
-      return;
-    }
-    const requestPackages = persistedSubscriptionPackages(readSubscriptionPackages());
-    requestPackages.splice(index, 1);
-    if (requestPackages.some(pkg => !isValidSubscriptionPackage(pkg))) {
-      toast('Complete the other package rows before deleting this package');
-      return;
-    }
-    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
-      method: 'PATCH',
-      body: JSON.stringify({ requestPackages }),
-    });
-    if (!result) { toast('Failed to delete package'); return; }
-    _subscriptionPackages = Array.isArray(result.requestPackages) ? result.requestPackages : requestPackages;
-    _subscriptionSettingsLoaded = true;
-    renderSubscriptionPackages();
-    toast('Package deleted successfully');
-  }
-
-  async function saveDailyRequestLimit() {
-    const dailyRequestLimit = Number(document.getElementById('subscription-dailyRequestLimit')?.value || 0);
-    if (!Number.isInteger(dailyRequestLimit) || dailyRequestLimit < 1) {
-      toast('Enter a valid daily request allowance');
-      return;
-    }
-    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
-      method: 'PATCH',
-      body: JSON.stringify({ dailyRequestLimit }),
-    });
-    if (!result) { toast('Failed to save daily allowance'); return; }
-    toast('Daily request allowance saved successfully');
-  }
-
   // ── Boot ────────────────────────────────────────────────────────────────────
   // Honour URL hash so back-links from other pages can land on a specific section.
+  if (location.hash === '#subscription') {
+    window.location.replace('subscription.html');
+    return;
+  }
   const _bootSection = window.location.hash.replace('#', '');
-  activateSection(sections.includes(_bootSection) ? _bootSection : 'overview');
+  activateSection(navHashes.includes(_bootSection) ? _bootSection : 'overview');
+  initCockpitCollapsibles();
 
   const appVersionBtn = document.getElementById('appVersionSaveBtn');
   const paymentBtn = document.getElementById('paymentSaveBtn');
   const appConfigsBtn = document.getElementById('appConfigsSaveBtn');
   const miscBtn = document.getElementById('miscSaveBtn');
   const eventsBtn = document.getElementById('eventsSaveBtn');
-  const subscriptionAddBtn = document.getElementById('subscriptionAddPackageBtn');
-  const subscriptionDailyLimitSaveBtn = document.getElementById('subscriptionDailyLimitSaveBtn');
-  
+
   if (appVersionBtn)  appVersionBtn.addEventListener('click', saveAppVersion);
   if (paymentBtn)     paymentBtn.addEventListener('click', savePayment);
   if (appConfigsBtn)  appConfigsBtn.addEventListener('click', saveAppConfigs);
   if (miscBtn)        miscBtn.addEventListener('click', saveMisc);
   if (eventsBtn)      eventsBtn.addEventListener('click', saveEventsSettings);
-  if (subscriptionAddBtn) subscriptionAddBtn.addEventListener('click', () => {
-    if (_subscriptionPackages.some(pkg => pkg._draft)) {
-      toast('Create or delete the current draft package first');
-      return;
-    }
-    _subscriptionPackages.push({ id: '', name: '', description: '', requests: 20, cost: 100, currency: 'INR', expiryDays: 0, enabled: true, _draft: true });
-    renderSubscriptionPackages();
-  });
-  if (subscriptionDailyLimitSaveBtn) subscriptionDailyLimitSaveBtn.addEventListener('click', saveDailyRequestLimit);
 
   // ── Initialize Events List ──────────────────────────────────────────────────
   // Load events when the Events section is activated

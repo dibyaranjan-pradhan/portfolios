@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/admin.css?v=dash9" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=dash10" />
 </head>
 <body class="dash-body">
 
@@ -270,9 +270,26 @@
       <div class="reward-tabs" role="tablist" aria-label="Rewards sections">
         <button type="button" class="reward-tab active" data-reward-tab="rules" role="tab" aria-selected="true">Reward Rules</button>
         <button type="button" class="reward-tab" data-reward-tab="users" role="tab" aria-selected="false">User Rewards</button>
+        <button type="button" class="reward-tab" data-reward-tab="orders" role="tab" aria-selected="false">Redemption Orders</button>
       </div>
 
       <div class="reward-tab-panel active" id="reward-panel-rules" role="tabpanel">
+        <div class="plan-toolbar">
+          <h4 class="plan-toolbar-title">Merchandise Catalog</h4>
+          <button class="btn-sm btn-primary" id="merchandiseCreateBtn" type="button">Create merchandise</button>
+        </div>
+        <div class="plan-create" id="merchandiseCreatePanel" hidden>
+          <div class="plan-create-grid">
+            <div class="form-group"><label for="merchandiseName">Name</label><input type="text" id="merchandiseName" class="text-input" /></div>
+            <div class="form-group"><label for="merchandiseDescription">Description</label><input type="text" id="merchandiseDescription" class="text-input" /></div>
+            <div class="form-group"><label for="merchandiseImageUrl">Image URL</label><input type="url" id="merchandiseImageUrl" class="text-input" placeholder="https://..." /></div>
+            <div class="form-group"><label for="merchandisePointsRequired">Points required</label><input type="number" min="0" id="merchandisePointsRequired" class="text-input" value="0" /></div>
+            <div class="form-group"><label for="merchandiseStock">Inventory</label><input type="number" min="0" id="merchandiseStock" class="text-input" value="0" /></div>
+            <div class="form-group form-checkbox"><label><input type="checkbox" id="merchandiseActive" checked /> Active in app</label></div>
+          </div>
+          <div class="misc-footer"><button class="btn-sm btn-primary" id="merchandiseSaveBtn" type="button">Create item</button></div>
+        </div>
+        <div class="merchandise-catalog" id="merchandiseCatalog"></div>
         <div class="reward-config-grid">
           <div class="misc-group">
             <h4 class="misc-group-title">Point Rules</h4>
@@ -284,14 +301,19 @@
             <input type="number" min="1" id="reward-referralSignupPoints" class="text-input" />
           </div>
           <div class="misc-group">
-            <h4 class="misc-group-title">Level Names &amp; Thresholds</h4>
-            <div class="reward-level-row"><input type="text" id="reward-level1Name" class="text-input" placeholder="Level 1 name" /><input type="number" min="0" id="reward-level1MinPoints" class="text-input" placeholder="Minimum points" /></div>
-            <div class="reward-level-row"><input type="text" id="reward-level2Name" class="text-input" placeholder="Level 2 name" /><input type="number" min="0" id="reward-level2MinPoints" class="text-input" placeholder="Minimum points" /></div>
-            <div class="reward-level-row"><input type="text" id="reward-level3Name" class="text-input" placeholder="Level 3 name" /><input type="number" min="0" id="reward-level3MinPoints" class="text-input" placeholder="Minimum points" /></div>
-            <div class="reward-level-row"><input type="text" id="reward-level4Name" class="text-input" placeholder="Level 4 name" /><input type="number" min="0" id="reward-level4MinPoints" class="text-input" placeholder="Minimum points" /></div>
+            <h4 class="misc-group-title">Level Names, Thresholds &amp; Rewards</h4>
+            <div class="reward-level-row"><input type="text" id="reward-level1Name" class="text-input" placeholder="Level 1 name" /><input type="number" min="0" id="reward-level1MinPoints" class="text-input" placeholder="Minimum points" /><input type="number" min="0" id="reward-level1Credits" class="text-input" placeholder="Requests awarded" /><select id="reward-level1Merchandise" class="text-input"><option value="">No merchandise</option></select></div>
+            <div class="reward-level-row"><input type="text" id="reward-level2Name" class="text-input" placeholder="Level 2 name" /><input type="number" min="0" id="reward-level2MinPoints" class="text-input" placeholder="Minimum points" /><input type="number" min="0" id="reward-level2Credits" class="text-input" placeholder="Requests awarded" /><select id="reward-level2Merchandise" class="text-input"><option value="">No merchandise</option></select></div>
+            <div class="reward-level-row"><input type="text" id="reward-level3Name" class="text-input" placeholder="Level 3 name" /><input type="number" min="0" id="reward-level3MinPoints" class="text-input" placeholder="Minimum points" /><input type="number" min="0" id="reward-level3Credits" class="text-input" placeholder="Requests awarded" /><select id="reward-level3Merchandise" class="text-input"><option value="">No merchandise</option></select></div>
+            <div class="reward-level-row"><input type="text" id="reward-level4Name" class="text-input" placeholder="Level 4 name" /><input type="number" min="0" id="reward-level4MinPoints" class="text-input" placeholder="Minimum points" /><input type="number" min="0" id="reward-level4Credits" class="text-input" placeholder="Requests awarded" /><select id="reward-level4Merchandise" class="text-input"><option value="">No merchandise</option></select></div>
           </div>
         </div>
         <div class="misc-footer"><button class="btn-sm btn-primary" id="rewardSaveBtn">Save Reward Settings</button></div>
+        <div class="points-adjust-panel">
+          <h4 class="misc-group-title">Admin Point Adjustment</h4>
+          <div class="plan-create-grid"><div class="form-group"><label for="adjustPointsUserId">User ID</label><input type="text" id="adjustPointsUserId" class="text-input" /></div><div class="form-group"><label for="adjustPointsAmount">Points (+/-)</label><input type="number" id="adjustPointsAmount" class="text-input" /></div><div class="form-group"><label for="adjustPointsReason">Reason</label><input type="text" id="adjustPointsReason" class="text-input" /></div></div>
+          <div class="misc-footer"><button class="btn-sm btn-primary" id="adjustPointsBtn" type="button">Adjust points</button></div>
+        </div>
       </div>
 
       <div class="reward-tab-panel" id="reward-panel-users" role="tabpanel" hidden>
@@ -307,6 +329,11 @@
           <div class="table-empty hidden" id="rewardsEmpty"><p>No reward activity found</p></div>
         </div>
         <div class="pagination" id="rewardsPagination"></div>
+      </div>
+
+      <div class="reward-tab-panel" id="reward-panel-orders" role="tabpanel" hidden>
+        <div class="section-intro reward-users-heading"><h4 class="section-title">Redemption Orders</h4><p class="section-desc">Review redeemed merchandise and update fulfilment status.</p></div>
+        <div class="table-wrap"><table class="data-table" id="redemptionsTable"><thead><tr><th>Order</th><th>User</th><th>Merchandise</th><th>Points</th><th>Delivery</th><th>Status</th><th>Action</th></tr></thead><tbody id="redemptionsBody"></tbody></table><div class="table-empty hidden" id="redemptionsEmpty"><p>No redemption orders found</p></div></div>
       </div>
     </section>
 
@@ -854,6 +881,6 @@
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
   <script src="assets/js/config.js?v=6"></script>
-  <script src="assets/js/dashboard.js?v=8"></script>
+  <script src="assets/js/dashboard.js?v=9"></script>
 </body>
 </html>

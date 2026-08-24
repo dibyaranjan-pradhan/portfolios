@@ -196,7 +196,7 @@
     if (name === 'overview')  loadStats();
     if (name === 'users')     loadUsers(1);
     if (name === 'requests')  loadRequests(1);
-    if (name === 'rewards') loadRewardSettings();
+    if (name === 'rewards') { loadMerchandise(); loadRewardSettings(); }
     if (name === 'reports')   loadReports(1);
     if (name === 'support')   loadSupport(1);
     if (name === 'events')    loadEvents();
@@ -236,6 +236,7 @@
         panel.hidden = !isSelected;
       });
       if (selectedTab === 'users') loadRewards(1);
+      if (selectedTab === 'orders') loadRedemptions();
     });
   });
 
@@ -274,40 +275,128 @@
   // ── Rewards ─────────────────────────────────────────────────────────────────
   let rewardPage = 1;
   let rewardSettingsLoaded = false;
+  let merchandiseLoaded = false;
+  let editingMerchandiseId = null;
 
   function setRewardField(id, value) {
     const el = document.getElementById(id);
     if (el && value != null) el.value = value;
   }
 
+  async function loadMerchandise() {
+    if (merchandiseLoaded) return;
+    const result = await apiAbs(API_BASE + '/v1/admin/merchandise');
+    const items = Array.isArray(result?.items) ? result.items : [];
+    ['1', '2', '3', '4'].forEach(level => {
+      const select = document.getElementById('reward-level' + level + 'Merchandise');
+      if (!select) return;
+      select.innerHTML = '<option value="">No merchandise</option>' + items.map(item => `<option value="${esc(item.id)}">${esc(item.name)}</option>`).join('');
+    });
+    const catalog = document.getElementById('merchandiseCatalog');
+    if (catalog) {
+      catalog.innerHTML = items.length ? items.map(item => `<div class="merchandise-item">
+        ${item.imageUrl ? `<img src="${esc(item.imageUrl)}" alt="" class="merchandise-item-image" />` : '<div class="merchandise-item-image merchandise-item-image-empty">No image</div>'}
+        <div class="merchandise-item-details"><strong>${esc(item.name)}</strong><span>${esc(item.description || 'No description')}</span><span>${Number(item.pointsRequired || 0).toLocaleString()} points · ${Number(item.stock || 0).toLocaleString()} in stock · ${item.active === false ? 'Inactive' : 'Active'}</span></div>
+        <div class="merchandise-item-actions"><button type="button" class="btn-sm btn-secondary merchandise-edit-btn" data-merchandise-id="${esc(item.id)}">Edit</button><button type="button" class="btn-sm btn-danger merchandise-delete-btn" data-merchandise-id="${esc(item.id)}">Delete</button></div>
+      </div>`).join('') : '<p class="merchandise-empty">No merchandise created yet.</p>';
+      catalog.querySelectorAll('.merchandise-edit-btn').forEach(button => button.addEventListener('click', () => editMerchandise(items.find(item => item.id === button.dataset.merchandiseId))));
+      catalog.querySelectorAll('.merchandise-delete-btn').forEach(button => button.addEventListener('click', () => deleteMerchandise(button.dataset.merchandiseId)));
+    }
+    merchandiseLoaded = true;
+  }
+
   async function loadRewardSettings() {
     if (rewardSettingsLoaded) return;
     const settings = await apiAbs(API_BASE + '/v1/admin/settings');
     if (!settings) { toast('Failed to load reward settings'); return; }
-    setRewardField('reward-pointsPerClubVisit', settings.rewardPointsPerClubVisit || 10);
-    setRewardField('reward-referralPoints', settings.referralRewardPoints || 25);
-    setRewardField('reward-referralSignupPoints', settings.referralSignupRewardPoints || 10);
-    setRewardField('reward-level1Name', settings.rewardLevel1Name || 'Excellent');
-    setRewardField('reward-level2Name', settings.rewardLevel2Name || 'Pro');
-    setRewardField('reward-level3Name', settings.rewardLevel3Name || 'Legend');
-    setRewardField('reward-level4Name', settings.rewardLevel4Name || 'GOAT');
-    setRewardField('reward-level1MinPoints', settings.rewardLevel1MinPoints || 0);
-    setRewardField('reward-level2MinPoints', settings.rewardLevel2MinPoints || 100);
-    setRewardField('reward-level3MinPoints', settings.rewardLevel3MinPoints || 250);
-    setRewardField('reward-level4MinPoints', settings.rewardLevel4MinPoints || 500);
+    const rewards = settings.rewards || {};
+    await loadMerchandise();
+    setRewardField('reward-pointsPerClubVisit', rewards.pointsPerClubVisit || 10);
+    setRewardField('reward-referralPoints', rewards.referralRewardPoints || 25);
+    setRewardField('reward-referralSignupPoints', rewards.referralSignupPoints || 10);
+    setRewardField('reward-level1Name', rewards.level1Name || 'Starter');
+    setRewardField('reward-level2Name', rewards.level2Name || 'Pro');
+    setRewardField('reward-level3Name', rewards.level3Name || 'Legend');
+    setRewardField('reward-level4Name', rewards.level4Name || 'GOAT');
+    setRewardField('reward-level1MinPoints', rewards.level1MinPoints || 0);
+    setRewardField('reward-level2MinPoints', rewards.level2MinPoints || 100);
+    setRewardField('reward-level3MinPoints', rewards.level3MinPoints || 250);
+    setRewardField('reward-level4MinPoints', rewards.level4MinPoints || 500);
+    setRewardField('reward-level1Credits', rewards.level1Credits || 0);
+    setRewardField('reward-level2Credits', rewards.level2Credits || 0);
+    setRewardField('reward-level3Credits', rewards.level3Credits || 0);
+    setRewardField('reward-level4Credits', rewards.level4Credits || 0);
+    setRewardField('reward-level1Merchandise', rewards.level1Merchandise || '');
+    setRewardField('reward-level2Merchandise', rewards.level2Merchandise || '');
+    setRewardField('reward-level3Merchandise', rewards.level3Merchandise || '');
+    setRewardField('reward-level4Merchandise', rewards.level4Merchandise || '');
     rewardSettingsLoaded = true;
+  }
+
+  async function createMerchandise() {
+    const name = document.getElementById('merchandiseName')?.value.trim();
+    const description = document.getElementById('merchandiseDescription')?.value.trim();
+    const imageUrl = document.getElementById('merchandiseImageUrl')?.value.trim();
+    const pointsRequired = Number(document.getElementById('merchandisePointsRequired')?.value || 0);
+    const stock = Number(document.getElementById('merchandiseStock')?.value || 0);
+    const active = document.getElementById('merchandiseActive')?.checked !== false;
+    if (!name) { toast('Enter a merchandise name'); return; }
+    if (!Number.isFinite(pointsRequired) || pointsRequired < 0 || !Number.isFinite(stock) || stock < 0) { toast('Enter valid points and inventory'); return; }
+    const endpoint = editingMerchandiseId ? API_BASE + '/v1/admin/merchandise/' + encodeURIComponent(editingMerchandiseId) : API_BASE + '/v1/admin/merchandise';
+    const result = await apiAbs(endpoint, { method: editingMerchandiseId ? 'PUT' : 'POST', body: JSON.stringify({ name, description, imageUrl, pointsRequired, stock, active }) });
+    if (!result) { toast(editingMerchandiseId ? 'Failed to update merchandise' : 'Failed to create merchandise'); return; }
+    merchandiseLoaded = false;
+    await loadMerchandise();
+    document.getElementById('merchandiseName').value = '';
+    document.getElementById('merchandiseDescription').value = '';
+    document.getElementById('merchandiseImageUrl').value = '';
+    document.getElementById('merchandisePointsRequired').value = '0';
+    document.getElementById('merchandiseStock').value = '0';
+    document.getElementById('merchandiseActive').checked = true;
+    document.getElementById('merchandiseCreatePanel').hidden = true;
+    document.getElementById('merchandiseSaveBtn').textContent = 'Create item';
+    toast(editingMerchandiseId ? 'Merchandise updated' : 'Merchandise created');
+    editingMerchandiseId = null;
+  }
+
+  function editMerchandise(item) {
+    if (!item) return;
+    editingMerchandiseId = item.id;
+    setRewardField('merchandiseName', item.name);
+    setRewardField('merchandiseDescription', item.description || '');
+    setRewardField('merchandiseImageUrl', item.imageUrl || '');
+    setRewardField('merchandisePointsRequired', item.pointsRequired || 0);
+    setRewardField('merchandiseStock', item.stock || 0);
+    document.getElementById('merchandiseActive').checked = item.active !== false;
+    document.getElementById('merchandiseSaveBtn').textContent = 'Save changes';
+    document.getElementById('merchandiseCreatePanel').hidden = false;
+  }
+
+  async function deleteMerchandise(id) {
+    if (!window.confirm('Delete this merchandise item?')) return;
+    const result = await apiAbs(API_BASE + '/v1/admin/merchandise/' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!result) { toast('Failed to delete merchandise'); return; }
+    merchandiseLoaded = false;
+    await loadMerchandise();
+    toast('Merchandise deleted');
   }
 
   async function saveRewardSettings() {
     const value = id => document.getElementById(id)?.value;
     const payload = {
-      rewardPointsPerClubVisit: Number(value('reward-pointsPerClubVisit')),
-      referralRewardPoints: Number(value('reward-referralPoints')),
-      referralSignupRewardPoints: Number(value('reward-referralSignupPoints')),
-      rewardLevel1Name: value('reward-level1Name'), rewardLevel2Name: value('reward-level2Name'),
-      rewardLevel3Name: value('reward-level3Name'), rewardLevel4Name: value('reward-level4Name'),
-      rewardLevel1MinPoints: Number(value('reward-level1MinPoints')), rewardLevel2MinPoints: Number(value('reward-level2MinPoints')),
-      rewardLevel3MinPoints: Number(value('reward-level3MinPoints')), rewardLevel4MinPoints: Number(value('reward-level4MinPoints')),
+      rewards: {
+        pointsPerClubVisit: Number(value('reward-pointsPerClubVisit')),
+        referralRewardPoints: Number(value('reward-referralPoints')),
+        referralSignupPoints: Number(value('reward-referralSignupPoints')),
+        level1Name: value('reward-level1Name'), level2Name: value('reward-level2Name'),
+        level3Name: value('reward-level3Name'), level4Name: value('reward-level4Name'),
+        level1MinPoints: Number(value('reward-level1MinPoints')), level2MinPoints: Number(value('reward-level2MinPoints')),
+        level3MinPoints: Number(value('reward-level3MinPoints')), level4MinPoints: Number(value('reward-level4MinPoints')),
+        level1Credits: Number(value('reward-level1Credits')), level2Credits: Number(value('reward-level2Credits')),
+        level3Credits: Number(value('reward-level3Credits')), level4Credits: Number(value('reward-level4Credits')),
+        level1Merchandise: value('reward-level1Merchandise'), level2Merchandise: value('reward-level2Merchandise'),
+        level3Merchandise: value('reward-level3Merchandise'), level4Merchandise: value('reward-level4Merchandise'),
+      },
     };
     if (Object.values(payload).some(v => v === '' || v == null || (typeof v === 'number' && (!Number.isFinite(v) || v < 0)))) {
       toast('Enter valid reward settings');
@@ -356,7 +445,50 @@
     renderPagination('rewardsPagination', page, totalPages, loadRewards);
   }
 
+  async function loadRedemptions() {
+    const result = await apiAbs(API_BASE + '/v1/admin/redemptions');
+    const items = Array.isArray(result?.items) ? result.items : [];
+    const body = document.getElementById('redemptionsBody');
+    const empty = document.getElementById('redemptionsEmpty');
+    if (!items.length) { body.innerHTML = ''; empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    body.innerHTML = items.map(order => {
+      const address = order.address || {};
+      const statuses = ['redeemed', 'processing', 'shipped', 'delivered', 'cancelled'];
+      const options = statuses.map(status => `<option value="${status}" ${order.status === status ? 'selected' : ''}>${status}</option>`).join('');
+      return `<tr><td><strong>${esc(order.orderId || order.id)}</strong><br/><small>${fmtDateTime(order.createdAt)}</small></td><td>${esc(order.userId || '—')}</td><td>${esc(order.merchandiseName || '—')}${order.variantName ? `<br/><small>${esc(order.variantName)}</small>` : ''}</td><td>${Number(order.points || 0).toLocaleString()}</td><td>${esc([address.name, address.city, address.postalCode].filter(Boolean).join(', ') || '—')}</td><td><select class="status-select redemption-status" data-order-id="${esc(order.orderId)}">${options}</select></td><td><button class="btn-sm btn-primary save-redemption-status" data-order-id="${esc(order.orderId)}">Save</button></td></tr>`;
+    }).join('');
+    body.querySelectorAll('.save-redemption-status').forEach(button => button.addEventListener('click', async () => {
+      const orderId = button.dataset.orderId;
+      const select = body.querySelector(`.redemption-status[data-order-id="${CSS.escape(orderId)}"]`);
+      const response = await apiAbs(API_BASE + '/v1/admin/redemptions/' + encodeURIComponent(orderId) + '/status', { method: 'PATCH', body: JSON.stringify({ status: select.value }) });
+      if (!response) { toast('Failed to update order'); return; }
+      toast('Order status updated');
+      loadRedemptions();
+    }));
+  }
+
+  async function adjustPoints() {
+    const userId = document.getElementById('adjustPointsUserId')?.value.trim();
+    const points = Number(document.getElementById('adjustPointsAmount')?.value);
+    const reason = document.getElementById('adjustPointsReason')?.value.trim();
+    if (!userId || !Number.isInteger(points) || points === 0 || !reason) { toast('Enter user, non-zero points, and a reason'); return; }
+    const response = await apiAbs(API_BASE + '/v1/admin/points/adjust', { method: 'POST', body: JSON.stringify({ userId, points, reason }) });
+    if (!response) { toast('Failed to adjust points'); return; }
+    toast('Points adjusted');
+    document.getElementById('adjustPointsAmount').value = '';
+    document.getElementById('adjustPointsReason').value = '';
+  }
+
   document.getElementById('rewardSaveBtn').addEventListener('click', saveRewardSettings);
+  document.getElementById('merchandiseCreateBtn')?.addEventListener('click', () => {
+    const panel = document.getElementById('merchandiseCreatePanel');
+    editingMerchandiseId = null;
+    document.getElementById('merchandiseSaveBtn').textContent = 'Create item';
+    panel.hidden = !panel.hidden;
+  });
+  document.getElementById('merchandiseSaveBtn')?.addEventListener('click', createMerchandise);
+  document.getElementById('adjustPointsBtn')?.addEventListener('click', adjustPoints);
 
   // ── Users ─────────────────────────────────────────────────────────────────────
   let userPage = 1;

@@ -503,9 +503,21 @@
         ${field('Rating',         esc(rating))}
         ${field('Total Bookings', u.totalCount != null ? esc(u.totalCount) : '—')}
         ${field('Charge Amount',  u.chargeAmount ? fmtCurrency(u.chargeAmount) : '—')}
+        <div class="detail-card">
+          <div class="detail-card-label">Reward Points</div>
+          <div class="detail-card-value" id="userRewardPointsValue">${Number(u.rewardPoints || 0).toLocaleString()}</div>
+        </div>
         ${field('Referral Code',  esc(u.referralCode) || '—')}
         ${field('Referred By',    esc(u.referredByCode) || '—')}
       </div>
+
+      <p class="detail-section-title">Add Reward Points</p>
+      <div class="points-adjust-form">
+        <input id="userPointsAmount" class="detail-input" type="number" min="1" step="1" placeholder="Points to add" />
+        <input id="userPointsReason" class="detail-input" type="text" maxlength="200" placeholder="Reason" />
+        <button id="userAddPointsBtn" class="btn-sm btn-primary" type="button">Add points</button>
+      </div>
+      <p id="userPointsFeedback" class="points-adjust-feedback" aria-live="polite"></p>
 
       <p class="detail-section-title">Timeline</p>
       <div class="detail-grid">
@@ -557,7 +569,50 @@
       });
     }
 
+    const addPointsButton = document.getElementById('userAddPointsBtn');
+    if (addPointsButton) {
+      addPointsButton.addEventListener('click', addRewardPoints);
+    }
+
     tabLoaded.details = true;
+  }
+
+  async function addRewardPoints() {
+    const amountInput = document.getElementById('userPointsAmount');
+    const reasonInput = document.getElementById('userPointsReason');
+    const feedback = document.getElementById('userPointsFeedback');
+    const button = document.getElementById('userAddPointsBtn');
+    const points = Number(amountInput.value);
+    const reason = reasonInput.value.trim();
+    if (!Number.isInteger(points) || points <= 0 || !reason) {
+      feedback.style.color = '#e74c3c';
+      feedback.textContent = 'Enter a positive whole number and a reason.';
+      return;
+    }
+
+    button.disabled = true;
+    feedback.style.color = 'var(--muted)';
+    feedback.textContent = 'Adding points…';
+    const { ok, data } = await apiAbs(API_BASE + '/v1/admin/points/adjust', {
+      method: 'POST',
+      body: JSON.stringify({ userId, points, reason }),
+    });
+    button.disabled = false;
+    if (!ok) {
+      feedback.style.color = '#e74c3c';
+      feedback.textContent = data?.message || 'Unable to add points.';
+      return;
+    }
+
+    const pointsValue = document.getElementById('userRewardPointsValue');
+    const currentPoints = Number(_cachedUser?.rewardPoints || 0);
+    const updatedPoints = currentPoints + points;
+    if (_cachedUser) _cachedUser.rewardPoints = updatedPoints;
+    if (pointsValue) pointsValue.textContent = updatedPoints.toLocaleString();
+    amountInput.value = '';
+    reasonInput.value = '';
+    feedback.style.color = '#50c878';
+    feedback.textContent = data?.message || 'Reward points added successfully.';
   }
 
   // ── Availability tab ─────────────────────────────────────────────────────────

@@ -2353,12 +2353,14 @@ a.req-user-name:hover { color: var(--red); }
   min-height: 12px;
 }
 .plan-create .form-group input,
-.plan-create .form-group select {
+.plan-create .form-group select,
+.plan-create .form-group textarea {
   padding: 8px 10px;
   font-size: 0.85rem;
   height: 38px;
   box-sizing: border-box;
 }
+.plan-create .form-group textarea { height: auto; min-height: 88px; resize: vertical; }
 .plan-expiry-row {
   display: grid;
   grid-template-columns: 1fr 14px 1fr;
@@ -2436,6 +2438,26 @@ a.req-user-name:hover { color: var(--red); }
   padding: 10px 16px;
   line-height: 1.2;
 }
+.plan-name-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--white);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,0.3);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.plan-name-link:hover { color: var(--red); text-decoration-color: var(--red); }
+.plan-details-modal { max-width: 720px; }
+.plan-details-body { margin-bottom: 16px; }
+.plan-description-field { grid-column: 1 / -1; }
+.plan-description-field textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 100px; }
+.description-count { align-self: flex-end; color: var(--muted); font-size: 0.72rem; }
+.description-hint { color: var(--muted); font-size: 0.72rem; }
 #plansTable th.is-sortable {
   cursor: pointer;
   user-select: none;

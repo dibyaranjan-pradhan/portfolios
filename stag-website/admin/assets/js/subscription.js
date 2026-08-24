@@ -69,6 +69,10 @@
   const pagerEl = document.getElementById('plansPagination');
   const createPanel = document.getElementById('planCreatePanel');
   const createOpenBtn = document.getElementById('planCreateOpenBtn');
+  const planDetailsModal = document.getElementById('planDetailsModal');
+  const detailDescriptionEl = document.getElementById('detailPlanDescription');
+  const detailDescriptionCountEl = document.getElementById('detailDescriptionCount');
+  let detailPlanId = '';
   const PAGE_LIMIT = 10;
   let plans = [];
   let currentPage = 1;
@@ -184,7 +188,7 @@
           (active ? ' disabled title="Deactivate the plan before deleting"' : ' title="Delete plan"') +
         '>Delete</button>';
     return '<tr class="' + rowClass + '" data-plan-id="' + esc(plan.id) + '">' +
-      '<td>' + esc(plan.name) + '</td>' +
+      '<td><button class="plan-name-link" type="button" data-plan-open="' + esc(plan.id) + '">' + esc(plan.name) + '</button></td>' +
       '<td>' + esc(plan.creditCount) + '</td>' +
       '<td>' + esc(plan.cost) + '</td>' +
       '<td>' + esc(plan.currency) + '</td>' +
@@ -197,6 +201,34 @@
       '</td>' +
       '<td class="plan-keep">' + deleteBtn + '</td>' +
     '</tr>';
+  }
+
+  function formatDate(value) {
+    if (!value) return 'Not available';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Not available' : date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function openPlanDetails(plan) {
+    if (!plan) return;
+    detailPlanId = plan.id;
+    document.getElementById('detailPlanName').textContent = plan.name || 'Unnamed plan';
+    document.getElementById('detailPlanStatus').textContent = plan.status || 'Not specified';
+    document.getElementById('detailPlanCredits').textContent = String(plan.creditCount == null ? 'Not specified' : plan.creditCount);
+    document.getElementById('detailPlanPrice').textContent = (plan.currency || 'INR') + ' ' + Number(plan.cost || 0).toLocaleString('en-IN');
+    document.getElementById('detailPlanPurpose').textContent = plan.purpose || 'Not specified';
+    document.getElementById('detailPlanExpiry').textContent = plan.neverExpires ? 'Never expires' : (String(plan.expiryDays || 0) + ' days');
+    document.getElementById('detailPlanCreated').textContent = formatDate(plan.createdAt);
+    document.getElementById('detailPlanUpdated').textContent = formatDate(plan.updatedAt);
+    detailDescriptionEl.value = plan.description || '';
+    detailDescriptionCountEl.textContent = detailDescriptionEl.value.length + '/500';
+    planDetailsModal.classList.remove('hidden');
+    detailDescriptionEl.focus();
+  }
+
+  function closePlanDetails() {
+    planDetailsModal.classList.add('hidden');
+    detailPlanId = '';
   }
 
   function renderPlans() {
@@ -321,6 +353,12 @@
   });
 
   tableEl.addEventListener('click', function (ev) {
+    const planButton = ev.target.closest('[data-plan-open]');
+    if (planButton) {
+      const plan = plans.find(function (item) { return item.id === planButton.getAttribute('data-plan-open'); });
+      openPlanDetails(plan);
+      return;
+    }
     const th = ev.target.closest('th[data-sort]');
     if (!th || !tableEl.contains(th)) return;
     const key = th.getAttribute('data-sort');
@@ -331,6 +369,33 @@
       sortDir = 'asc';
     }
     renderPlans();
+  });
+
+  detailDescriptionEl.addEventListener('input', function () {
+    detailDescriptionCountEl.textContent = detailDescriptionEl.value.length + '/500';
+  });
+
+  document.getElementById('planDetailsClose').addEventListener('click', closePlanDetails);
+  planDetailsModal.addEventListener('click', function (ev) {
+    if (ev.target === planDetailsModal) closePlanDetails();
+  });
+  document.getElementById('savePlanDescription').addEventListener('click', async function () {
+    if (!detailPlanId) return;
+    const saveButton = document.getElementById('savePlanDescription');
+    saveButton.disabled = true;
+    const result = await apiAbs(API_BASE + '/v1/subscription/plans/' + encodeURIComponent(detailPlanId), {
+      method: 'PATCH',
+      body: JSON.stringify({ description: detailDescriptionEl.value.trim() }),
+    });
+    saveButton.disabled = false;
+    if (!result.ok) {
+      toast((result.data && result.data.message) || 'Description update failed');
+      return;
+    }
+    upsertPlan(result.data);
+    renderPlans();
+    closePlanDetails();
+    toast('Plan description updated');
   });
 
   tableEl.addEventListener('change', async function (ev) {

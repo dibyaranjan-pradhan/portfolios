@@ -183,7 +183,7 @@
   }
 
   // ── Tab switching ───────────────────────────────────────────────────────────
-  const tabLoaded = { details: false, requests: false, booked: false, bank: false, availability: false, location: false, push: false, payout: false };
+  const tabLoaded = { details: false, requests: false, booked: false, bank: false, availability: false, location: false, push: false, payout: false, subscriptions: false };
   let _cachedUser = null;
   let _cachedLocations = [];
 
@@ -226,7 +226,185 @@
       initPayoutRowClicks();
       loadPayoutHistory(1);
     }
+    if (name === 'subscriptions' && !tabLoaded.subscriptions) {
+      tabLoaded.subscriptions = true;
+      loadUserSubscriptions();
+    }
   }
+
+  const subStatusMap = {
+    live: 'badge-active',
+    scheduled: 'badge-pending',
+    exhausted: 'badge-inactive',
+    expired: 'badge-expired',
+  };
+
+  let userSubs = {
+    dailyAllowance: 0,
+    dailyUsed: 0,
+    live: { items: [], total: 0, page: 1, limit: 10 },
+    older: { items: [], total: 0, page: 1, limit: 10 },
+  };
+
+  function asPaged(raw) {
+    return {
+      items: (raw && raw.items) || [],
+      total: (raw && raw.total) || 0,
+      page: (raw && raw.page) || 1,
+      limit: (raw && raw.limit) || 10,
+    };
+  }
+
+  function packEndAt(row) {
+    if (!row) return '';
+    if (row.status === 'expired') return row.expiresAt || row.updatedAt || '';
+    if (row.status === 'exhausted') return row.updatedAt || row.expiresAt || '';
+    return row.expiresAt || row.updatedAt || '';
+  }
+
+  function renderSubCard(row, queued) {
+    const purpose = row.purpose || 'entry';
+    const credits = '<strong>' + esc(row.creditsLeft) + '</strong> / ' + esc(row.creditCount);
+    let expiryLine;
+    if (queued) {
+      expiryLine = 'Starts after current pack';
+    } else if (row.neverExpires) {
+      expiryLine = 'Expires ∞';
+    } else {
+      expiryLine = 'Expires ' + esc(fmtDate(row.expiresAt));
+    }
+    return `
+      <article class="user-sub-card${queued ? ' user-sub-card--queued' : ''}">
+        <div class="user-sub-card-top">
+          <span class="user-sub-card-name">${esc(row.name || 'Pack')}</span>
+          ${badge(purpose, { entry: 'badge-basic' })}
+        </div>
+        <p class="user-sub-card-credits">${credits} left</p>
+        <p class="user-sub-card-meta">Bought ${esc(fmtDate(row.createdAt))}<br>${expiryLine}</p>
+      </article>
+    `;
+  }
+
+  function renderUserSubscriptions() {
+    const dailyEl = document.getElementById('userSubsDaily');
+    const liveEl = document.getElementById('userSubsLive');
+    const olderEl = document.getElementById('userSubsOlder');
+    const allowance = userSubs.dailyAllowance;
+    const used = userSubs.dailyUsed;
+    dailyEl.innerHTML = `
+      <div class="user-subs-daily">
+        <span class="user-subs-daily-label">Daily free</span>
+        <span class="user-subs-daily-value">${esc(used)} / ${esc(allowance)}</span>
+        <span class="user-subs-daily-hint">${allowance === 0 ? 'No daily free' : 'UTC today'}</span>
+      </div>
+    `;
+
+    const liveItems = userSubs.live.items;
+    const inUse = liveItems.filter(function (row) { return row.status === 'live'; });
+    const queued = liveItems.filter(function (row) { return row.status === 'scheduled'; });
+    const noPaid = userSubs.live.total === 0 && userSubs.older.total === 0;
+
+    let liveHtml = '';
+    if (noPaid) {
+      liveHtml = '<p class="user-subs-empty">No paid pack. Daily only.</p>';
+    } else {
+      liveHtml += '<div class="user-subs-block"><h4 class="user-subs-heading">Live packs</h4>';
+      if (!inUse.length && !queued.length) {
+        liveHtml += '<p class="user-subs-empty">No pack in use.</p>';
+      } else {
+        liveHtml += '<div class="user-subs-live-row">';
+        liveHtml += inUse.map(function (row) { return renderSubCard(row, false); }).join('');
+        liveHtml += queued.map(function (row) { return renderSubCard(row, true); }).join('');
+        liveHtml += '</div>';
+      }
+      if (userSubs.live.items.length < userSubs.live.total) {
+        liveHtml += '<button class="btn-sm btn-ghost user-subs-more" type="button" data-subs-more="live">See more</button>';
+      }
+      liveHtml += '</div>';
+    }
+    liveEl.innerHTML = liveHtml;
+
+    if (noPaid) {
+      olderEl.innerHTML = '';
+      return;
+    }
+
+    const olderRows = userSubs.older.items.map(function (row) {
+      return `<tr>
+        <td>${esc(row.name || '—')}</td>
+        <td>${esc(row.creditsLeft)} / ${esc(row.creditCount)}</td>
+        <td>${badge(row.status, subStatusMap)}</td>
+        <td>${esc(fmtDate(row.createdAt))}</td>
+        <td>${esc(fmtDate(row.startsAt))}</td>
+        <td>${esc(fmtDate(packEndAt(row)))}</td>
+      </tr>`;
+    }).join('');
+
+    let olderHtml = '<div class="user-subs-block"><h4 class="user-subs-heading">Older</h4>';
+    if (!userSubs.older.items.length) {
+      olderHtml += '<p class="user-subs-empty">No past packs.</p>';
+    } else {
+      olderHtml += `<div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Plan</th><th>Credits</th><th>Status</th><th>Bought</th><th>Start</th><th>End</th></tr></thead>
+          <tbody>${olderRows}</tbody>
+        </table>
+      </div>`;
+      if (userSubs.older.items.length < userSubs.older.total) {
+        olderHtml += '<button class="btn-sm btn-ghost user-subs-more" type="button" data-subs-more="older">See more</button>';
+      }
+    }
+    olderHtml += '</div>';
+    olderEl.innerHTML = olderHtml;
+  }
+
+  async function loadUserSubscriptions() {
+    const dailyEl = document.getElementById('userSubsDaily');
+    dailyEl.innerHTML = '<div class="detail-loading">Loading subscriptions…</div>';
+    document.getElementById('userSubsLive').innerHTML = '';
+    document.getElementById('userSubsOlder').innerHTML = '';
+    const result = await apiAbs(API_BASE + '/v1/subscription/user/' + encodeURIComponent(userId));
+    if (!result.ok || !result.data) {
+      dailyEl.innerHTML = '<div class="detail-error">Failed to load subscriptions.</div>';
+      toast((result.data && result.data.message) || 'Failed to load subscriptions');
+      return;
+    }
+    userSubs.dailyAllowance = Number.isInteger(result.data.dailyAllowance) && result.data.dailyAllowance >= 0
+      ? result.data.dailyAllowance
+      : 0;
+    userSubs.dailyUsed = Number.isInteger(result.data.dailyUsed) && result.data.dailyUsed >= 0
+      ? result.data.dailyUsed
+      : 0;
+    userSubs.live = asPaged(result.data.live);
+    userSubs.older = asPaged(result.data.older);
+    renderUserSubscriptions();
+  }
+
+  async function loadMoreUserSubs(listType) {
+    const bag = listType === 'older' ? userSubs.older : userSubs.live;
+    const nextPage = (bag.page || 1) + 1;
+    const result = await apiAbs(
+      API_BASE + '/v1/subscription/user/' + encodeURIComponent(userId) +
+      '/more?type=' + encodeURIComponent(listType) + '&page=' + nextPage + '&limit=' + (bag.limit || 10)
+    );
+    if (!result.ok || !result.data) {
+      toast((result.data && result.data.message) || 'Failed to load more packs');
+      return;
+    }
+    const page = asPaged(result.data);
+    bag.items = bag.items.concat(page.items);
+    bag.page = page.page;
+    bag.total = page.total;
+    bag.limit = page.limit;
+    renderUserSubscriptions();
+  }
+
+  document.getElementById('tab-subscriptions').addEventListener('click', function (ev) {
+    const btn = ev.target.closest('[data-subs-more]');
+    if (!btn) return;
+    btn.disabled = true;
+    loadMoreUserSubs(btn.getAttribute('data-subs-more'));
+  });
 
   // ── Payout History tab ────────────────────────────────────────────────────────
 

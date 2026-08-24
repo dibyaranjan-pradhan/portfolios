@@ -2651,6 +2651,19 @@ a.req-user-name:hover { color: var(--red); }
   justify-content: space-between;
   gap: 8px;
 }
+.user-sub-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.user-sub-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #50c878;
+  flex-shrink: 0;
+}
+.user-sub-card--queued .user-sub-dot { background: #ffa500; }
 .user-sub-card-name {
   font-size: 0.9rem;
   font-weight: 600;

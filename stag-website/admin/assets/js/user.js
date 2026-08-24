@@ -263,7 +263,6 @@
   }
 
   function renderSubCard(row, queued) {
-    const purpose = row.purpose || 'entry';
     const credits = '<strong>' + esc(row.creditsLeft) + '</strong> / ' + esc(row.creditCount);
     let expiryLine;
     if (queued) {
@@ -273,11 +272,14 @@
     } else {
       expiryLine = 'Expires ' + esc(fmtDate(row.expiresAt));
     }
+    const statusChip = queued
+      ? '<span class="badge badge-pending user-sub-status"><i class="user-sub-dot"></i>Queued</span>'
+      : '<span class="badge badge-active user-sub-status"><i class="user-sub-dot"></i>Live</span>';
     return `
       <article class="user-sub-card${queued ? ' user-sub-card--queued' : ''}">
         <div class="user-sub-card-top">
           <span class="user-sub-card-name">${esc(row.name || 'Pack')}</span>
-          ${badge(purpose, { entry: 'badge-basic' })}
+          ${statusChip}
         </div>
         <p class="user-sub-card-credits">${credits} left</p>
         <p class="user-sub-card-meta">Bought ${esc(fmtDate(row.createdAt))}<br>${expiryLine}</p>

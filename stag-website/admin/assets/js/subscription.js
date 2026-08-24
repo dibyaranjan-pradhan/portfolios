@@ -66,11 +66,49 @@
   const bodyEl = document.getElementById('plansBody');
   const emptyEl = document.getElementById('plansEmpty');
   const loaderEl = document.getElementById('plansLoader');
+  const pagerEl = document.getElementById('plansPagination');
   const createPanel = document.getElementById('planCreatePanel');
   const createOpenBtn = document.getElementById('planCreateOpenBtn');
+  const PAGE_LIMIT = 10;
   let plans = [];
+  let currentPage = 1;
+  let pageLimit = PAGE_LIMIT;
+  let totalPlans = 0;
   let sortKey = '';
   let sortDir = 'asc';
+
+  function renderPagination(page, totalPages, onPageChange) {
+    pagerEl.innerHTML = '';
+    if (totalPages <= 1) return;
+    const prev = document.createElement('button');
+    prev.className = 'page-btn';
+    prev.textContent = '‹';
+    prev.disabled = page <= 1;
+    prev.onclick = function () { onPageChange(page - 1); };
+    pagerEl.appendChild(prev);
+    const maxVisible = 5;
+    let start = Math.max(1, page - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+    for (let p = start; p <= end; p++) {
+      const btn = document.createElement('button');
+      btn.className = 'page-btn' + (p === page ? ' active' : '');
+      btn.textContent = p;
+      btn.onclick = function () { onPageChange(p); };
+      pagerEl.appendChild(btn);
+    }
+    const next = document.createElement('button');
+    next.className = 'page-btn';
+    next.textContent = '›';
+    next.disabled = page >= totalPages;
+    next.onclick = function () { onPageChange(page + 1); };
+    pagerEl.appendChild(next);
+  }
+
+  function renderPager() {
+    const totalPages = Math.max(1, Math.ceil(totalPlans / pageLimit));
+    renderPagination(currentPage, totalPages, loadPlans);
+  }
 
   function comparePlans(a, b) {
     const av = a[sortKey];
@@ -116,6 +154,7 @@
     if (on) {
       tableEl.hidden = true;
       emptyEl.hidden = true;
+      pagerEl.innerHTML = '';
     }
   }
 
@@ -166,6 +205,7 @@
       bodyEl.innerHTML = '';
       tableEl.hidden = true;
       emptyEl.hidden = false;
+      pagerEl.innerHTML = '';
       return;
     }
     applySort();
@@ -173,6 +213,7 @@
     tableEl.hidden = false;
     emptyEl.hidden = true;
     syncSortHeaders();
+    renderPager();
   }
 
   function resetForm() {
@@ -185,16 +226,23 @@
     setNeverExpires(false);
   }
 
-  async function loadPlans() {
+  async function loadPlans(page) {
+    currentPage = page > 0 ? page : 1;
     showLoader(true);
-    const result = await apiAbs(API_BASE + '/v1/subscription/plans?page=1&limit=50');
+    const result = await apiAbs(API_BASE + '/v1/subscription/plans?page=' + currentPage + '&limit=' + PAGE_LIMIT);
     if (!result.ok) {
       toast((result.data && result.data.message) || 'Failed to load plans');
       plans = [];
+      totalPlans = 0;
+      pageLimit = PAGE_LIMIT;
       renderPlans();
       return;
     }
-    plans = (result.data && (result.data.items || result.data.Items)) || [];
+    const payload = result.data || {};
+    plans = payload.items || [];
+    totalPlans = payload.total || 0;
+    if (payload.limit > 0) pageLimit = payload.limit;
+    if (payload.page > 0) currentPage = payload.page;
     renderPlans();
   }
 
@@ -261,10 +309,15 @@
     toast('Plan created');
     resetForm();
     setCreatePanelOpen(false);
-    if (result.data && result.data.id) {
-      upsertPlan(result.data);
-      renderPlans();
+    if (!result.data || !result.data.id) return;
+    if (currentPage !== 1) {
+      loadPlans(1);
+      return;
     }
+    upsertPlan(result.data);
+    totalPlans += 1;
+    if (plans.length > pageLimit) plans.length = pageLimit;
+    renderPlans();
   });
 
   tableEl.addEventListener('click', function (ev) {

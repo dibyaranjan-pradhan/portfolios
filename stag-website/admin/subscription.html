@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/admin.css?v=subs12" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=subs15" />
 </head>
 <body class="dash-body">
 
@@ -148,6 +149,18 @@
         <p class="section-desc">Prepaid request-credit plans. Toggle hides a plan from the shop. Deactivate first, then delete. Existing purchases keep their copy.</p>
       </div>
 
+      <div class="quota-bar">
+        <div class="quota-bar-copy">
+          <h4 class="plan-toolbar-title">Daily free requests</h4>
+          <p class="quota-bar-hint">UTC day. 0 means no daily free. Paid packs are unchanged.</p>
+        </div>
+        <div class="quota-bar-controls">
+          <label class="quota-bar-label" for="dailyRequestLimit">Count</label>
+          <input type="number" id="dailyRequestLimit" class="text-input quota-bar-input" min="0" step="1" />
+          <button class="btn-sm btn-primary" id="dailyRequestLimitSave" type="button">Save</button>
+        </div>
+      </div>
+
       <div class="plan-toolbar">
         <h4 class="plan-toolbar-title">Plans</h4>
         <button class="btn-sm btn-primary" id="planCreateOpenBtn" type="button">Create plan</button>
@@ -257,6 +270,6 @@
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
   <script src="assets/js/config.js"></script>
-  <script src="assets/js/subscription.js?v=subs13"></script>
+  <script src="assets/js/subscription.js?v=subs14"></script>
 </body>
 </html>

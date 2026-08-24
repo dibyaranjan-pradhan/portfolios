@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/admin.css" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=subs16" />
 </head>
 <body class="dash-body">
 
@@ -30,6 +31,7 @@
       <button class="user-tab" data-tab="requests">Club Requests</button>
       <button class="user-tab" data-tab="booked">Booked Clubs</button>
       <button class="user-tab" data-tab="bank" id="bankTab" style="display:none">Bank Account</button>
+      <button class="user-tab" data-tab="subscriptions">Subscriptions</button>
       <button class="user-tab" data-tab="availability" id="availabilityTab" style="display:none">Availability</button>
       <button class="user-tab" data-tab="location" id="locationTab" style="display:none">Location</button>
       <button class="user-tab" data-tab="push">Push Notification</button>
@@ -97,6 +99,13 @@
       <div id="bankAccountBody">
         <div class="detail-loading">Loading bank account…</div>
       </div>
+    </div>
+
+    <!-- ── Tab: Subscriptions ──────────────────────────────────────────────── -->
+    <div class="user-tab-panel" id="tab-subscriptions" style="display:none">
+      <div id="userSubsDaily"></div>
+      <div id="userSubsLive"></div>
+      <div id="userSubsOlder"></div>
     </div>
 
     <!-- ── Tab: Availability ──────────────────────────────────────────────── -->
@@ -173,6 +182,6 @@
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
   <script src="assets/js/config.js"></script>
-  <script src="assets/js/user.js"></script>
+  <script src="assets/js/user.js?v=subs16"></script>
 </body>
 </html>

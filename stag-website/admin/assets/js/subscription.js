@@ -436,6 +436,40 @@
     renderPlans();
   });
 
+  async function loadDailyQuota() {
+    const input = document.getElementById('dailyRequestLimit');
+    const result = await apiAbs(API_BASE + '/v1/admin/settings');
+    if (!result.ok || !result.data) {
+      toast((result.data && result.data.message) || 'Failed to load daily free count');
+      return;
+    }
+    const limit = result.data.dailyRequestLimit;
+    input.value = Number.isInteger(limit) && limit >= 0 ? String(limit) : '0';
+  }
+
+  document.getElementById('dailyRequestLimitSave').addEventListener('click', async function () {
+    const input = document.getElementById('dailyRequestLimit');
+    const saveBtn = document.getElementById('dailyRequestLimitSave');
+    const value = Number(input.value);
+    if (!Number.isInteger(value) || value < 0) {
+      toast('Daily free count must be 0 or greater');
+      return;
+    }
+    saveBtn.disabled = true;
+    const result = await apiAbs(API_BASE + '/v1/admin/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ dailyRequestLimit: value }),
+    });
+    saveBtn.disabled = false;
+    if (!result.ok) {
+      toast((result.data && result.data.message) || 'Failed to save daily free count');
+      return;
+    }
+    const saved = result.data && result.data.dailyRequestLimit;
+    input.value = Number.isInteger(saved) && saved >= 0 ? String(saved) : String(value);
+    toast(value === 0 ? 'Daily free disabled' : 'Daily free count saved');
+  });
+
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
@@ -457,5 +491,6 @@
     });
   }
 
+  loadDailyQuota();
   loadPlans();
 })();

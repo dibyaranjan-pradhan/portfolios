@@ -175,7 +175,7 @@
           </div>
           <div class="form-group plan-create-half">
             <label for="planDescription">Description</label>
-            <input type="text" id="planDescription" class="text-input" />
+            <textarea id="planDescription" class="text-input" rows="4" placeholder="Get access to users planning similar visits&#10;Connect with people who share your interests&#10;Send and receive visit plan requests&#10;Credits are valid for 30 days"></textarea>
           </div>
           <div class="form-group plan-create-half">
             <label>Expiry</label>
@@ -226,9 +226,37 @@
     </section>
   </main>
 
+  <div class="modal-overlay hidden" id="planDetailsModal" role="dialog" aria-modal="true" aria-labelledby="planDetailsTitle">
+    <div class="modal-card modal-wide plan-details-modal">
+      <button class="modal-close" id="planDetailsClose" type="button" aria-label="Close plan details">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <h3 class="modal-title" id="planDetailsTitle">Plan details</h3>
+      <div class="modal-body plan-details-body">
+        <div class="modal-field"><span class="mf-label">Name</span><span class="mf-value" id="detailPlanName"></span></div>
+        <div class="modal-field"><span class="mf-label">Status</span><span class="mf-value" id="detailPlanStatus"></span></div>
+        <div class="modal-field"><span class="mf-label">Credits</span><span class="mf-value" id="detailPlanCredits"></span></div>
+        <div class="modal-field"><span class="mf-label">Price</span><span class="mf-value" id="detailPlanPrice"></span></div>
+        <div class="modal-field"><span class="mf-label">Purpose</span><span class="mf-value" id="detailPlanPurpose"></span></div>
+        <div class="modal-field"><span class="mf-label">Validity</span><span class="mf-value" id="detailPlanExpiry"></span></div>
+        <div class="modal-field"><span class="mf-label">Created</span><span class="mf-value" id="detailPlanCreated"></span></div>
+        <div class="modal-field"><span class="mf-label">Last updated</span><span class="mf-value" id="detailPlanUpdated"></span></div>
+        <div class="modal-field plan-description-field">
+          <label class="mf-label" for="detailPlanDescription">Description</label>
+          <textarea id="detailPlanDescription" class="text-input" maxlength="500" rows="5" placeholder="Get access to users planning similar visits&#10;Connect with people who share your interests&#10;Send and receive visit plan requests&#10;Credits are valid for 30 days"></textarea>
+          <span class="description-hint">Enter one benefit per line. Each line appears as a bullet in the app.</span>
+          <span class="description-count" id="detailDescriptionCount">0/500</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-sm btn-primary" id="savePlanDescription" type="button">Save description</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
   <script src="assets/js/config.js"></script>
-  <script src="assets/js/subscription.js?v=subs12"></script>
+  <script src="assets/js/subscription.js?v=subs13"></script>
 </body>
 </html>

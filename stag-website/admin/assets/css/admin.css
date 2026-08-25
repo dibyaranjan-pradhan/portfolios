@@ -431,10 +431,16 @@ input, select, textarea { font-family:inherit; }
 .form-checkbox { align-self: end; padding-bottom: 10px; }
 .form-checkbox label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.78rem; }
 .form-checkbox input { accent-color: var(--red); }
-.points-adjust-panel { border-top: 1px solid var(--border); margin-top: 24px; padding-top: 20px; }
 .status-select { min-width: 110px; padding: 7px 8px; background: var(--bg-main); color: var(--white); border: 1px solid var(--border); border-radius: var(--radius); text-transform: capitalize; }
 #redemptionsTable small { color: var(--muted); font-size: 0.7rem; }
 #redemptionsTable td { vertical-align: middle; }
+.notification-template-editor { margin-bottom: 18px; }
+.notification-template-hint { color: var(--muted); font-size: 0.75rem; margin-top: 12px; }
+.notification-template-hint code, #notificationTemplatesTable code { color: var(--red); font-family: inherit; }
+.notification-template-body-cell { max-width: 280px; white-space: normal; line-height: 1.4; }
+.redemption-link { color: var(--red); text-decoration: none; font-weight: 600; }
+.redemption-link:hover { text-decoration: underline; }
+.redemption-address { line-height: 1.45; white-space: normal; }
 .reward-users-heading { margin-top: 34px; margin-bottom: 14px; }
 .reward-history-list { margin: 8px 0 0 0; padding: 0; list-style: none; }
 .reward-history-list li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.76rem; }

@@ -175,13 +175,13 @@
   }
 
   // ── Navigation ───────────────────────────────────────────────────────────────
-  const sections = ['overview', 'users', 'requests', 'rewards', 'reports', 'support', 'events', 'salesLeads', 'salesLeadDetail', 'cockpit'];
+  const sections = ['overview', 'users', 'requests', 'rewards', 'notifications', 'reports', 'support', 'events', 'salesLeads', 'salesLeadDetail', 'cockpit'];
   const sectionTitles = {
-    overview: 'Overview', users: 'Users', requests: 'Club Requests', rewards: 'Rewards',
+    overview: 'Overview', users: 'Users', requests: 'Club Requests', rewards: 'Rewards', notifications: 'Notifications',
     reports: 'Reports', support: 'Support Tickets', events: 'Events Management', salesLeads: 'Sales Leads', salesLeadDetail: 'Sales Lead Details', cockpit: 'Cockpit',
   };
 
-  const navHashes = ['overview', 'users', 'requests', 'rewards', 'events', 'salesLeads', 'reports', 'support', 'cockpit'];
+  const navHashes = ['overview', 'users', 'requests', 'rewards', 'notifications', 'events', 'salesLeads', 'reports', 'support', 'cockpit'];
 
   function activateSection(name, skipHash) {
     console.log('[STAG Admin] Navigating to section:', name, '—', sectionTitles[name] || name);
@@ -197,6 +197,7 @@
     if (name === 'users')     loadUsers(1);
     if (name === 'requests')  loadRequests(1);
     if (name === 'rewards') { loadMerchandise(); loadRewardSettings(); }
+    if (name === 'notifications') loadNotificationTemplates();
     if (name === 'reports')   loadReports(1);
     if (name === 'support')   loadSupport(1);
     if (name === 'events')    loadEvents();
@@ -276,7 +277,11 @@
   let rewardPage = 1;
   let rewardSettingsLoaded = false;
   let merchandiseLoaded = false;
+  let merchandiseItems = [];
   let editingMerchandiseId = null;
+  let notificationTemplates = [];
+  let editingNotificationTemplateId = null;
+  const notificationTemplatesStorageKey = 'stag_admin_notification_templates';
 
   function setRewardField(id, value) {
     const el = document.getElementById(id);
@@ -287,6 +292,7 @@
     if (merchandiseLoaded) return;
     const result = await apiAbs(API_BASE + '/v1/admin/merchandise');
     const items = Array.isArray(result?.items) ? result.items : [];
+    merchandiseItems = items;
     ['1', '2', '3', '4'].forEach(level => {
       const select = document.getElementById('reward-level' + level + 'Merchandise');
       if (!select) return;
@@ -445,6 +451,73 @@
     renderPagination('rewardsPagination', page, totalPages, loadRewards);
   }
 
+  function resetNotificationTemplateForm() {
+    editingNotificationTemplateId = null;
+    document.getElementById('notificationTemplateTrigger').value = 'request.created';
+    document.getElementById('notificationTemplateName').value = '';
+    document.getElementById('notificationTemplateTitle').value = '';
+    document.getElementById('notificationTemplateBody').value = '';
+    document.getElementById('notificationTemplateActive').checked = true;
+    document.getElementById('notificationTemplateSaveBtn').textContent = 'Create template';
+    document.getElementById('notificationTemplateCancelBtn').hidden = true;
+  }
+
+  async function loadNotificationTemplates() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(notificationTemplatesStorageKey) || '[]');
+      notificationTemplates = Array.isArray(stored) ? stored : [];
+    } catch (error) {
+      notificationTemplates = [];
+    }
+    const body = document.getElementById('notificationTemplatesBody');
+    const empty = document.getElementById('notificationTemplatesEmpty');
+    if (!notificationTemplates.length) { body.innerHTML = ''; empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    body.innerHTML = notificationTemplates.map(template => `<tr><td><strong>${esc(template.name)}</strong></td><td><code>${esc(template.triggerKey)}</code></td><td>${esc(template.title)}</td><td class="notification-template-body-cell">${esc(template.body)}</td><td>${template.active ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-inactive">Inactive</span>'}</td><td><div class="merchandise-item-actions"><button type="button" class="btn-sm btn-secondary notification-edit-btn" data-template-id="${esc(template.id)}">Edit</button><button type="button" class="btn-sm btn-danger notification-delete-btn" data-template-id="${esc(template.id)}">Delete</button></div></td></tr>`).join('');
+    body.querySelectorAll('.notification-edit-btn').forEach(button => button.addEventListener('click', () => {
+      const template = notificationTemplates.find(item => item.id === button.dataset.templateId);
+      if (!template) return;
+      editingNotificationTemplateId = template.id;
+      document.getElementById('notificationTemplateTrigger').value = template.triggerKey;
+      document.getElementById('notificationTemplateName').value = template.name;
+      document.getElementById('notificationTemplateTitle').value = template.title;
+      document.getElementById('notificationTemplateBody').value = template.body;
+      document.getElementById('notificationTemplateActive').checked = template.active;
+      document.getElementById('notificationTemplateSaveBtn').textContent = 'Save changes';
+      document.getElementById('notificationTemplateCancelBtn').hidden = false;
+      document.getElementById('notificationTemplateEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    body.querySelectorAll('.notification-delete-btn').forEach(button => button.addEventListener('click', async () => {
+      if (!window.confirm('Delete this notification template?')) return;
+      notificationTemplates = notificationTemplates.filter(item => item.id !== button.dataset.templateId);
+      localStorage.setItem(notificationTemplatesStorageKey, JSON.stringify(notificationTemplates));
+      toast('Notification template deleted');
+      loadNotificationTemplates();
+    }));
+  }
+
+  async function saveNotificationTemplate() {
+    const payload = {
+      triggerKey: document.getElementById('notificationTemplateTrigger').value,
+      name: document.getElementById('notificationTemplateName').value.trim(),
+      title: document.getElementById('notificationTemplateTitle').value.trim(),
+      body: document.getElementById('notificationTemplateBody').value.trim(),
+      active: document.getElementById('notificationTemplateActive').checked,
+    };
+    if (!payload.triggerKey || !payload.name || !payload.title || !payload.body) { toast('Complete all notification template fields'); return; }
+    const editing = Boolean(editingNotificationTemplateId);
+    const timestamp = new Date().toISOString();
+    if (editing) {
+      notificationTemplates = notificationTemplates.map(template => template.id === editingNotificationTemplateId ? { ...template, ...payload, updatedAt: timestamp } : template);
+    } else {
+      notificationTemplates.push({ id: 'local-' + Date.now(), ...payload, createdAt: timestamp, updatedAt: timestamp });
+    }
+    localStorage.setItem(notificationTemplatesStorageKey, JSON.stringify(notificationTemplates));
+    toast(editing ? 'Notification template updated' : 'Notification template created');
+    resetNotificationTemplateForm();
+    loadNotificationTemplates();
+  }
+
   async function loadRedemptions() {
     const result = await apiAbs(API_BASE + '/v1/admin/redemptions');
     const items = Array.isArray(result?.items) ? result.items : [];
@@ -456,8 +529,10 @@
       const address = order.address || {};
       const statuses = ['redeemed', 'processing', 'shipped', 'delivered', 'cancelled'];
       const options = statuses.map(status => `<option value="${status}" ${order.status === status ? 'selected' : ''}>${status}</option>`).join('');
-      return `<tr><td><strong>${esc(order.orderId || order.id)}</strong><br/><small>${fmtDateTime(order.createdAt)}</small></td><td>${esc(order.userId || '—')}</td><td>${esc(order.merchandiseName || '—')}${order.variantName ? `<br/><small>${esc(order.variantName)}</small>` : ''}</td><td>${Number(order.points || 0).toLocaleString()}</td><td>${esc([address.name, address.city, address.postalCode].filter(Boolean).join(', ') || '—')}</td><td><select class="status-select redemption-status" data-order-id="${esc(order.orderId)}">${options}</select></td><td><button class="btn-sm btn-primary save-redemption-status" data-order-id="${esc(order.orderId)}">Save</button></td></tr>`;
+      const addressSummary = [address.line1, address.line2, address.city, address.state, address.postalCode].filter(Boolean).join(', ');
+      return `<tr><td><strong>${esc(order.orderId || order.id)}</strong><br/><small>${fmtDateTime(order.createdAt)}</small></td><td><a class="redemption-link" href="user.html?id=${encodeURIComponent(order.userId || '')}">${esc(order.userName || order.userId || '—')}</a></td><td><button type="button" class="redemption-link merchandise-order-link" data-order='${esc(JSON.stringify(order))}'>${esc(order.merchandiseName || '—')}</button>${order.variantName ? `<br/><small>${esc(order.variantName)}</small>` : ''}</td><td>${Number(order.points || 0).toLocaleString()}</td><td class="redemption-address">${esc(addressSummary || '—')}${address.phone ? `<br/><small>${esc(address.phone)}</small>` : ''}</td><td><select class="status-select redemption-status" data-order-id="${esc(order.orderId)}">${options}</select></td><td><button class="btn-sm btn-primary save-redemption-status" data-order-id="${esc(order.orderId)}">Save</button></td></tr>`;
     }).join('');
+    body.querySelectorAll('.merchandise-order-link').forEach(button => button.addEventListener('click', () => openMerchandiseOrderDetails(JSON.parse(button.dataset.order))));
     body.querySelectorAll('.save-redemption-status').forEach(button => button.addEventListener('click', async () => {
       const orderId = button.dataset.orderId;
       const select = body.querySelector(`.redemption-status[data-order-id="${CSS.escape(orderId)}"]`);
@@ -468,19 +543,28 @@
     }));
   }
 
-  async function adjustPoints() {
-    const userId = document.getElementById('adjustPointsUserId')?.value.trim();
-    const points = Number(document.getElementById('adjustPointsAmount')?.value);
-    const reason = document.getElementById('adjustPointsReason')?.value.trim();
-    if (!userId || !Number.isInteger(points) || points === 0 || !reason) { toast('Enter user, non-zero points, and a reason'); return; }
-    const response = await apiAbs(API_BASE + '/v1/admin/points/adjust', { method: 'POST', body: JSON.stringify({ userId, points, reason }) });
-    if (!response) { toast('Failed to adjust points'); return; }
-    toast('Points adjusted');
-    document.getElementById('adjustPointsAmount').value = '';
-    document.getElementById('adjustPointsReason').value = '';
+  function openMerchandiseOrderDetails(order) {
+    const address = order.address || {};
+    const merchandise = merchandiseItems.find(item => item.id === order.merchandiseId) || {};
+    document.getElementById('merchandiseModalBody').innerHTML = `
+      ${merchandise.imageUrl ? `<div class="modal-field" style="grid-column:1/-1"><img src="${esc(merchandise.imageUrl)}" alt="" style="width:100%;max-height:180px;object-fit:contain;border-radius:8px;background:var(--bg-main)" /></div>` : ''}
+      <div class="modal-field"><span class="mf-label">Merchandise</span><span class="mf-value">${esc(order.merchandiseName || '—')}</span></div>
+      <div class="modal-field"><span class="mf-label">Description</span><span class="mf-value">${esc(merchandise.description || '—')}</span></div>
+      <div class="modal-field"><span class="mf-label">Variant</span><span class="mf-value">${esc(order.variantName || '—')}</span></div>
+      <div class="modal-field"><span class="mf-label">Points</span><span class="mf-value">${Number(order.points || 0).toLocaleString()}</span></div>
+      <div class="modal-field"><span class="mf-label">Order</span><span class="mf-value">${esc(order.orderId || order.id || '—')}</span></div>
+      <div class="modal-field" style="grid-column:1/-1"><span class="mf-label">Delivery address</span><span class="mf-value">${esc([address.name, address.line1, address.line2, address.city, address.state, address.postalCode, address.phone].filter(Boolean).join(', ') || '—')}</span></div>`;
+    document.getElementById('merchandiseModal').classList.remove('hidden');
   }
 
+  document.getElementById('merchandiseModalClose').addEventListener('click', () => document.getElementById('merchandiseModal').classList.add('hidden'));
+  document.getElementById('merchandiseModal').addEventListener('click', event => {
+    if (event.target === event.currentTarget) event.currentTarget.classList.add('hidden');
+  });
+
   document.getElementById('rewardSaveBtn').addEventListener('click', saveRewardSettings);
+  document.getElementById('notificationTemplateSaveBtn')?.addEventListener('click', saveNotificationTemplate);
+  document.getElementById('notificationTemplateCancelBtn')?.addEventListener('click', resetNotificationTemplateForm);
   document.getElementById('merchandiseCreateBtn')?.addEventListener('click', () => {
     const panel = document.getElementById('merchandiseCreatePanel');
     editingMerchandiseId = null;
@@ -488,7 +572,6 @@
     panel.hidden = !panel.hidden;
   });
   document.getElementById('merchandiseSaveBtn')?.addEventListener('click', createMerchandise);
-  document.getElementById('adjustPointsBtn')?.addEventListener('click', adjustPoints);
 
   // ── Users ─────────────────────────────────────────────────────────────────────
   let userPage = 1;

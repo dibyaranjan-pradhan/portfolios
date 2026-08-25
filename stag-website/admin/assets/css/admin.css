@@ -413,10 +413,34 @@ input, select, textarea { font-family:inherit; }
 .reward-config-grid .misc-col-label:first-of-type { margin-top: 0; }
 .reward-level-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.7fr);
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 0.65fr) minmax(120px, 0.7fr) minmax(130px, 0.9fr);
   gap: 10px;
   margin-bottom: 10px;
 }
+.merchandise-catalog { display: grid; gap: 8px; margin: 0 0 18px; }
+.merchandise-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+.merchandise-item-image { width: 54px; height: 54px; flex: 0 0 54px; object-fit: cover; border-radius: 6px; background: var(--bg-main); }
+.merchandise-item-image-empty { display: grid; place-items: center; color: var(--muted); font-size: 0.62rem; text-align: center; }
+.merchandise-item-details { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.merchandise-item-details strong { color: var(--white); font-size: 0.85rem; }
+.merchandise-item-details span, .merchandise-empty { color: var(--muted); font-size: 0.75rem; overflow-wrap: anywhere; }
+.merchandise-item-actions { display: flex; gap: 6px; }
+.merchandise-item-actions .btn-secondary { background: rgba(255,255,255,0.08); color: var(--white); border: 1px solid var(--border); }
+.merchandise-item-actions .btn-secondary:hover { background: rgba(255,255,255,0.16); }
+.merchandise-item-details span:last-child { color: var(--red); }
+.form-checkbox { align-self: end; padding-bottom: 10px; }
+.form-checkbox label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.78rem; }
+.form-checkbox input { accent-color: var(--red); }
+.status-select { min-width: 110px; padding: 7px 8px; background: var(--bg-main); color: var(--white); border: 1px solid var(--border); border-radius: var(--radius); text-transform: capitalize; }
+#redemptionsTable small { color: var(--muted); font-size: 0.7rem; }
+#redemptionsTable td { vertical-align: middle; }
+.notification-template-editor { margin-bottom: 18px; }
+.notification-template-hint { color: var(--muted); font-size: 0.75rem; margin-top: 12px; }
+.notification-template-hint code, #notificationTemplatesTable code { color: var(--red); font-family: inherit; }
+.notification-template-body-cell { max-width: 280px; white-space: normal; line-height: 1.4; }
+.redemption-link { color: var(--red); text-decoration: none; font-weight: 600; }
+.redemption-link:hover { text-decoration: underline; }
+.redemption-address { line-height: 1.45; white-space: normal; }
 .reward-users-heading { margin-top: 34px; margin-bottom: 14px; }
 .reward-history-list { margin: 8px 0 0 0; padding: 0; list-style: none; }
 .reward-history-list li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.76rem; }
@@ -1354,6 +1378,10 @@ input, select, textarea { font-family:inherit; }
   margin: 26px 0 12px;
 }
 .detail-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.points-adjust-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; max-width: 760px; }
+.detail-input { min-width: 180px; flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--white); font: inherit; outline: none; }
+.detail-input:focus { border-color: var(--red); }
+.points-adjust-feedback { min-height: 18px; margin: 10px 0 0; color: var(--muted); font-size: 0.8rem; }
 .detail-loading, .detail-error {
   text-align: center;
   color: var(--muted);

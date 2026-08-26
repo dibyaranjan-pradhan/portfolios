@@ -215,6 +215,31 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════
+   PRODUCTS SECTION
+═══════════════════════════════════════════════════════ */
+.products-section {
+  background: var(--page-bg);
+  padding: 18px 40px 72px;
+  text-align: center;
+}
+
+.products-intro h2 {
+  font-size: clamp(1.35rem, 2.8vw, 2rem);
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.products-intro p {
+  font-size: clamp(0.88rem, 1.5vw, 1rem);
+  color: var(--ink);
+  opacity: 0.8;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.75;
+}
+
+/* ═══════════════════════════════════════════════════════
    APP CARDS
 ═══════════════════════════════════════════════════════ */
 .apps-section {

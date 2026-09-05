@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Book your stay at Gour Hotels Jaipur — pick your dates, choose a room, and confirm your reservation in minutes.">
+<title>Book Your Stay | Gour Hotels Jaipur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="12" fill="#7c2436"/><circle cx="24" cy="9" r="1.6" fill="#c1912f"/><path d="M24 12v2.5" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M14 36V21c0-5.5 4.5-9.5 10-9.5s10 4 10 9.5v15" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M14 36h20" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M17.5 29c1.8-1.7 4-2.5 6.5-2.5s4.7.8 6.5 2.5" stroke="#e7c877" stroke-width="1.8" stroke-linecap="round"/><path d="M20 36v-5.5a4 4 0 0 1 8 0V36" stroke="#e7c877" stroke-width="1.8"/></svg>
+      <span class="brand-text"><strong>Gour Hotels</strong><small>JAIPUR &middot; EST. 1998</small></span>
+    </a>
+    <nav id="site-nav" class="site-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="rooms.html">Rooms &amp; Suites</a>
+      <a href="amenities.html">Amenities</a>
+      <a href="dining.html">Dining</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="about.html">About</a>
+      <a href="location.html">Location</a>
+      <a href="reviews.html">Reviews</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-primary btn-sm" href="booking.html">Book Now</a>
+      <button class="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="page-hero" style="background-image:url('https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1600&q=75');min-height:34vh">
+    <div class="hero-inner">
+      <span class="crumb">Reservation</span>
+      <h1>Book your stay.</h1>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+
+      <div class="book-steps">
+        <span class="step-pill active">1. Stay Details</span>
+        <span class="step-pill">2. Guest Details</span>
+        <span class="step-pill">3. Payment</span>
+      </div>
+
+      <form id="booking-form" class="book-layout">
+        <div>
+          <!-- Step 1 -->
+          <div class="book-step">
+            <h3 style="margin-bottom:20px">Your stay</h3>
+            <div class="form-row">
+              <div class="form-field"><label for="bk-checkin">Check-in date</label><input type="date" id="bk-checkin" class="checkin" required></div>
+              <div class="form-field"><label for="bk-checkout">Check-out date</label><input type="date" id="bk-checkout" class="checkout" required></div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label for="bk-adults">Adults</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <button type="button" class="btn btn-outline btn-sm" data-step="-1" data-target="bk-adults">−</button>
+                  <input type="number" id="bk-adults" min="1" max="6" value="2" style="text-align:center;border:1px solid var(--line);border-radius:10px;padding:13px;width:100%">
+                  <button type="button" class="btn btn-outline btn-sm" data-step="1" data-target="bk-adults">+</button>
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="bk-children">Children</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <button type="button" class="btn btn-outline btn-sm" data-step="-1" data-target="bk-children">−</button>
+                  <input type="number" id="bk-children" min="0" max="4" value="0" style="text-align:center;border:1px solid var(--line);border-radius:10px;padding:13px;width:100%">
+                  <button type="button" class="btn btn-outline btn-sm" data-step="1" data-target="bk-children">+</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-field">
+              <label for="bk-room">Room type</label>
+              <select id="bk-room">
+                <option value="heritage">Heritage Room — ₹3,500/night</option>
+                <option value="deluxe" selected>Deluxe Room — ₹4,500/night</option>
+                <option value="premium">Premium Suite — ₹6,800/night</option>
+                <option value="royal">Royal Family Suite — ₹9,200/night</option>
+              </select>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:10px"><button type="button" class="btn btn-primary" data-next>Continue to Guest Details</button></div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="book-step">
+            <h3 style="margin-bottom:20px">Guest details</h3>
+            <div class="form-field"><label for="bk-name">Full name</label><input type="text" id="bk-name" placeholder="As per ID proof" required></div>
+            <div class="form-row">
+              <div class="form-field"><label for="bk-email">Email</label><input type="email" id="bk-email" placeholder="you@example.com" required></div>
+              <div class="form-field"><label for="bk-phone">Phone</label><input type="tel" id="bk-phone" placeholder="+91 98xxx xxxxx" required></div>
+            </div>
+            <div class="form-field"><label for="bk-requests">Special requests (optional)</label><textarea id="bk-requests" placeholder="Early check-in, extra bed, airport pickup, etc."></textarea></div>
+            <div style="display:flex;justify-content:space-between;margin-top:10px"><button type="button" class="btn btn-outline" data-prev>Back</button><button type="button" class="btn btn-primary" data-next>Continue to Payment</button></div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="book-step">
+            <h3 style="margin-bottom:20px">Payment</h3>
+            <p class="form-note" style="margin-bottom:16px">This is a demo booking form — no payment is actually processed.</p>
+            <div class="pay-options">
+              <label><input type="radio" name="pay" checked> Pay at hotel (cash / card on arrival)</label>
+              <label><input type="radio" name="pay"> UPI</label>
+              <label><input type="radio" name="pay"> Credit / Debit Card</label>
+            </div>
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);margin:14px 0"><input type="checkbox" required style="margin-top:3px"> I agree to the <a class="text-link" href="policies.html#booking" target="_blank" style="margin:0 4px">booking policy</a> and <a class="text-link" href="policies.html#cancellation" target="_blank" style="margin-left:4px">cancellation policy</a>.</label>
+            <div style="display:flex;justify-content:space-between;margin-top:10px"><button type="button" class="btn btn-outline" data-prev>Back</button><button type="submit" class="btn btn-gold">Confirm Booking</button></div>
+          </div>
+        </div>
+
+        <aside class="summary-card">
+          <h3 style="font-size:19px;margin-bottom:16px">Price summary</h3>
+          <div class="summary-row"><span>Room</span><span id="sum-room">Deluxe Room</span></div>
+          <div class="summary-row"><span>Rate / night</span><span id="sum-rate">₹4,500</span></div>
+          <div class="summary-row"><span>Nights</span><span id="sum-nights">1</span></div>
+          <div class="summary-row"><span>Subtotal</span><span id="sum-subtotal">₹4,500</span></div>
+          <div class="summary-row"><span>Taxes (12% GST)</span><span id="sum-tax">₹540</span></div>
+          <div class="summary-row total"><span>Total payable</span><span id="sum-total">₹5,040</span></div>
+          <p class="form-note" style="margin-top:14px">Free cancellation up to 24 hours before check-in.</p>
+        </aside>
+      </form>
+
+      <div class="confirm-panel" id="confirm-panel">
+        <span class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span>
+        <h2>Booking confirmed, <span id="confirm-name">Guest</span>!</h2>
+        <p class="muted">Your reservation reference is</p>
+        <div class="book-ref" id="book-ref-number">GH000000</div>
+        <p class="muted">Total payable at check-in: <strong id="confirm-total">₹0</strong></p>
+        <p class="muted">A confirmation would normally be emailed and sent by WhatsApp — this is a demo flow, so nothing was actually sent.</p>
+        <a class="btn btn-primary" href="index.html" style="margin-top:16px">Back to Home</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><svg viewBox="0 0 48 48" fill="none" width="42" height="42" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="12" fill="#3d1119"/><circle cx="24" cy="9" r="1.6" fill="#c1912f"/><path d="M24 12v2.5" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M14 36V21c0-5.5 4.5-9.5 10-9.5s10 4 10 9.5v15" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M14 36h20" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M17.5 29c1.8-1.7 4-2.5 6.5-2.5s4.7.8 6.5 2.5" stroke="#e7c877" stroke-width="1.8" stroke-linecap="round"/><path d="M20 36v-5.5a4 4 0 0 1 8 0V36" stroke="#e7c877" stroke-width="1.8"/></svg><span><strong>Gour Hotels</strong><small>JAIPUR &middot; RAJASTHAN</small></span></div>
+        <p>A family-run heritage hotel in the heart of the Pink City, welcoming guests since 1998.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Instagram">IG</a>
+          <a href="#" aria-label="Facebook">FB</a>
+          <a href="#" aria-label="YouTube">YT</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="rooms.html">Rooms &amp; Suites</a>
+        <a href="amenities.html">Amenities</a>
+        <a href="dining.html">Dining</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="about.html">About Us</a>
+      </div>
+      <div class="footer-col">
+        <h4>Guest Info</h4>
+        <a href="location.html">Location</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="faq.html">FAQs</a>
+        <a href="policies.html">Policies</a>
+        <a href="booking.html">Book a Stay</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <p>14 Prithviraj Road, C-Scheme<br>Jaipur, Rajasthan 302001</p>
+        <a href="tel:+911414567890">+91 141 456 7890</a>
+        <a href="mailto:stay@gourhotels.in">stay@gourhotels.in</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Gour Hotels, Jaipur. All rights reserved.</span>
+      <span><a href="policies.html#cancellation">Cancellation</a> &middot; <a href="policies.html#privacy">Privacy</a> &middot; <a href="policies.html#terms">Terms</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+<script>
+  // Pre-select room type from ?room= query param (linked from Home / Rooms pages)
+  const params = new URLSearchParams(window.location.search);
+  const roomParam = params.get('room');
+  if (roomParam) {
+    const sel = document.getElementById('bk-room');
+    if (sel && [...sel.options].some(o => o.value === roomParam)) {
+      sel.value = roomParam;
+      sel.dispatchEvent(new Event('input'));
+    }
+  }
+  const checkinParam = params.get('checkin');
+  const checkoutParam = params.get('checkout');
+  if (checkinParam) document.getElementById('bk-checkin').value = checkinParam;
+  if (checkoutParam) document.getElementById('bk-checkout').value = checkoutParam;
+  if (checkinParam || checkoutParam) document.getElementById('bk-checkin').dispatchEvent(new Event('input'));
+</script>
+</body>
+</html>

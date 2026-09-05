@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Photo gallery for Gour Hotels Jaipur — exterior, rooms, restaurant, pool, lobby, surroundings and events.">
+<title>Gallery | Gour Hotels Jaipur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="12" fill="#7c2436"/><circle cx="24" cy="9" r="1.6" fill="#c1912f"/><path d="M24 12v2.5" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M14 36V21c0-5.5 4.5-9.5 10-9.5s10 4 10 9.5v15" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M14 36h20" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M17.5 29c1.8-1.7 4-2.5 6.5-2.5s4.7.8 6.5 2.5" stroke="#e7c877" stroke-width="1.8" stroke-linecap="round"/><path d="M20 36v-5.5a4 4 0 0 1 8 0V36" stroke="#e7c877" stroke-width="1.8"/></svg>
+      <span class="brand-text"><strong>Gour Hotels</strong><small>JAIPUR &middot; EST. 1998</small></span>
+    </a>
+    <nav id="site-nav" class="site-nav" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="rooms.html">Rooms &amp; Suites</a>
+      <a href="amenities.html">Amenities</a>
+      <a href="dining.html">Dining</a>
+      <a href="gallery.html" class="active">Gallery</a>
+      <a href="about.html">About</a>
+      <a href="location.html">Location</a>
+      <a href="reviews.html">Reviews</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-primary btn-sm" href="booking.html">Book Now</a>
+      <button class="menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="page-hero" style="background-image:url('https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1600&q=75');min-height:38vh">
+    <div class="hero-inner">
+      <span class="crumb">Gallery</span>
+      <h1>A look around<br>Gour Hotels.</h1>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="gallery-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="exterior">Exterior</button>
+        <button class="filter-btn" data-filter="rooms">Rooms</button>
+        <button class="filter-btn" data-filter="restaurant">Restaurant</button>
+        <button class="filter-btn" data-filter="pool">Pool</button>
+        <button class="filter-btn" data-filter="lobby">Lobby</button>
+        <button class="filter-btn" data-filter="surroundings">Surroundings</button>
+        <button class="filter-btn" data-filter="events">Events</button>
+      </div>
+
+      <div class="gallery-grid">
+        <div class="gallery-item wide" data-cat="exterior" style="background-image:url('https://images.unsplash.com/photo-1568084680786-a84f91d1153c?auto=format&fit=crop&w=900&q=75')"><span>Exterior</span></div>
+        <div class="gallery-item" data-cat="rooms" style="background-image:url('https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=600&q=75')"><span>Heritage Room</span></div>
+        <div class="gallery-item tall" data-cat="surroundings" style="background-image:url('https://images.unsplash.com/photo-1477587458883-47145ed94245?auto=format&fit=crop&w=600&q=75')"><span>Hawa Mahal</span></div>
+        <div class="gallery-item" data-cat="pool" style="background-image:url('https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=75')"><span>Pool</span></div>
+        <div class="gallery-item" data-cat="rooms" style="background-image:url('https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=75')"><span>Premium Suite</span></div>
+        <div class="gallery-item" data-cat="restaurant" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=600&q=75')"><span>Rasoi Restaurant</span></div>
+        <div class="gallery-item wide" data-cat="pool" style="background-image:url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=75')"><span>Pool at Night</span></div>
+        <div class="gallery-item" data-cat="lobby" style="background-image:url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=75')"><span>Lounge</span></div>
+        <div class="gallery-item" data-cat="rooms" style="background-image:url('https://images.unsplash.com/photo-1521783593447-5702b9bfd267?auto=format&fit=crop&w=600&q=75')"><span>Bathroom</span></div>
+        <div class="gallery-item tall" data-cat="events" style="background-image:url('https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=600&q=75')"><span>Banquet Hall</span></div>
+        <div class="gallery-item" data-cat="restaurant" style="background-image:url('https://images.unsplash.com/photo-1592861956120-e524fc739696?auto=format&fit=crop&w=600&q=75')"><span>Dining Room</span></div>
+        <div class="gallery-item" data-cat="events" style="background-image:url('https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&w=600&q=75')"><span>Conference Room</span></div>
+        <div class="gallery-item wide" data-cat="surroundings" style="background-image:url('https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=900&q=75')"><span>Amer Fort</span></div>
+        <div class="gallery-item" data-cat="exterior" style="background-image:url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=600&q=75')"><span>Courtyard at Dusk</span></div>
+        <div class="gallery-item" data-cat="restaurant" style="background-image:url('https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=600&q=75')"><span>Rooftop Caf&eacute;</span></div>
+        <div class="gallery-item" data-cat="pool" style="background-image:url('https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=600&q=75')"><span>Poolside Cabanas</span></div>
+        <div class="gallery-item" data-cat="rooms" style="background-image:url('https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=600&q=75')"><span>Royal Family Suite</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><svg viewBox="0 0 48 48" fill="none" width="42" height="42" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="12" fill="#3d1119"/><circle cx="24" cy="9" r="1.6" fill="#c1912f"/><path d="M24 12v2.5" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M14 36V21c0-5.5 4.5-9.5 10-9.5s10 4 10 9.5v15" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M14 36h20" stroke="#c1912f" stroke-width="2" stroke-linecap="round"/><path d="M17.5 29c1.8-1.7 4-2.5 6.5-2.5s4.7.8 6.5 2.5" stroke="#e7c877" stroke-width="1.8" stroke-linecap="round"/><path d="M20 36v-5.5a4 4 0 0 1 8 0V36" stroke="#e7c877" stroke-width="1.8"/></svg><span><strong>Gour Hotels</strong><small>JAIPUR &middot; RAJASTHAN</small></span></div>
+        <p>A family-run heritage hotel in the heart of the Pink City, welcoming guests since 1998.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Instagram">IG</a>
+          <a href="#" aria-label="Facebook">FB</a>
+          <a href="#" aria-label="YouTube">YT</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="rooms.html">Rooms &amp; Suites</a>
+        <a href="amenities.html">Amenities</a>
+        <a href="dining.html">Dining</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="about.html">About Us</a>
+      </div>
+      <div class="footer-col">
+        <h4>Guest Info</h4>
+        <a href="location.html">Location</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="faq.html">FAQs</a>
+        <a href="policies.html">Policies</a>
+        <a href="booking.html">Book a Stay</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <p>14 Prithviraj Road, C-Scheme<br>Jaipur, Rajasthan 302001</p>
+        <a href="tel:+911414567890">+91 141 456 7890</a>
+        <a href="mailto:stay@gourhotels.in">stay@gourhotels.in</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Gour Hotels, Jaipur. All rights reserved.</span>
+      <span><a href="policies.html#cancellation">Cancellation</a> &middot; <a href="policies.html#privacy">Privacy</a> &middot; <a href="policies.html#terms">Terms</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>
